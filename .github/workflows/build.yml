@@ -1,0 +1,55 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One jar for every Java: each job builds it on JDK 8 and runs the (headless) tests on the job's Java.
+jobs:
+  build:
+    name: ${{ matrix.os-name }} / Java ${{ matrix.java }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+        java: ['8', '25']
+        include:
+          - os: ubuntu-latest
+            os-name: Linux
+          - os: macos-14
+            os-name: macOS
+          - os: windows-latest
+            os-name: Windows
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up the test JDK
+        id: test-jdk
+        if: matrix.java != '8'
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+      - name: Set up the build JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: '8'
+          cache: maven
+      - name: Build and test
+        run: mvn -B verify ${{ matrix.java != '8' && format('"-Djvm={0}/bin/java{1}"', steps.test-jdk.outputs.path, runner.os == 'Windows' && '.exe' || '') || '' }}
+      - name: Keep test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-${{ matrix.os-name }}-java${{ matrix.java }}
+          path: target/surefire-reports/
+          if-no-files-found: ignore
