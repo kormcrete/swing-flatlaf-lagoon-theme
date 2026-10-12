@@ -75,6 +75,10 @@ toolbar and scroll thumb.
   from `UIManager`.
 - FlatLaf honours `apple.laf.useScreenMenuBar` on macOS, which some other look-and-feels ignore.
   If your menu bar moves to the top of the screen after switching, that property is why.
+- On Java 24 and later, FlatLaf's native library (window decorations and other platform
+  integration) prints a "restricted method" warning when it loads; a future Java will block it.
+  Start the application with `--enable-native-access=ALL-UNNAMED`, or add
+  `Enable-Native-Access: ALL-UNNAMED` to an executable jar's manifest.
 
 ## Build
 
