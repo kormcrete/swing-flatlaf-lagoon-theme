@@ -60,7 +60,7 @@ public class LagoonGallery {
 
         JPanel cmb = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         JComboBox<String> cb1 = new JComboBox<>(new String[]{"Red","Green","Blue"});
-        JComboBox<String> cb2 = new JComboBox<>(new String[]{"editable"}); cb2.setEditable(true);
+        JComboBox<String> cb2 = new JComboBox<>(new String[]{"editable"}); cb2.setEditable(true); cb2.setPrototypeDisplayValue("editable  ");
         JComboBox<String> cb3 = new JComboBox<>(new String[]{"disabled"}); cb3.setEnabled(false);
         JSpinner sp = new JSpinner(new SpinnerNumberModel(42, 0, 100, 1));
         cmb.add(cb1); cmb.add(cb2); cmb.add(cb3); cmb.add(sp);
@@ -112,7 +112,9 @@ public class LagoonGallery {
     }
 
     static void row(JPanel root, GridBagConstraints c, String label, JComponent comp) {
-        c.gridx = 0; c.weightx = 0; JLabel l = new JLabel(label); l.setFont(l.getFont().deriveFont(Font.BOLD)); root.add(l, c);
+        c.gridx = 0; c.weightx = 0; JLabel l = new JLabel(label); l.setFont(l.getFont().deriveFont(Font.BOLD));
+        // slack on the right: text painted at a higher scale runs a little wider than its 1x layout
+        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6)); root.add(l, c);
         c.gridx = 1; c.weightx = 1; root.add(comp, c);
         c.gridy++;
     }
