@@ -62,6 +62,9 @@ class FlatLagoonLafTest {
         assertEquals(LagoonBorders.Button.class, UIManager.getBorder("Button.border").getClass());
         assertEquals(LagoonBorders.Button.class, UIManager.getBorder("ToggleButton.border").getClass());
         assertEquals(LagoonBorders.ScrollPane.class, UIManager.getBorder("ScrollPane.border").getClass());
+        assertEquals(LagoonComboBoxUI.class.getName(), UIManager.getString("ComboBoxUI"));
+        assertEquals(LagoonSpinnerUI.class.getName(), UIManager.getString("SpinnerUI"));
+        assertEquals(LagoonButtonUI.class.getName(), UIManager.getString("ButtonUI"));
         Border titled = UIManager.getBorder("TitledBorder.border");
         assertEquals(new Insets(2, 2, 2, 2), titled.getBorderInsets(new JPanel()));
     }
@@ -127,6 +130,7 @@ class FlatLagoonLafTest {
         assertEquals(21, new JPasswordField(10).getPreferredSize().height);
         assertEquals(23, new JComboBox<>(new String[]{"x"}).getPreferredSize().height);
         assertEquals(24, new JSpinner().getPreferredSize().height);
+        assertEquals(47, new JSpinner(new javax.swing.SpinnerNumberModel(12, 0, 99, 1)).getPreferredSize().width);
         assertEquals(25, new JButton("Save").getPreferredSize().height);
         assertEquals(23, new JCheckBox("x").getPreferredSize().height);
     }

@@ -5,7 +5,6 @@ import com.formdev.flatlaf.ui.FlatButtonBorder;
 import com.formdev.flatlaf.ui.FlatRoundBorder;
 import com.formdev.flatlaf.ui.FlatScrollPaneBorder;
 import com.formdev.flatlaf.ui.FlatTextBorder;
-import com.formdev.flatlaf.ui.FlatUIUtils;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
@@ -14,44 +13,48 @@ import javax.swing.UIManager;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 
 import static com.formdev.flatlaf.util.UIScale.scale;
 
 /**
- * Component borders with a light ring outside the dark frame, in every enabled state.
+ * Component borders whose dark frame sits in an etched ring: a shadow line above and to the left, a
+ * highlight line below and to the right, in every enabled state; a disabled component has no ring.
  *
- * <p>FlatLaf reserves {@code Component.focusWidth} around a frame and paints it only while the component
- * has focus. These borders paint it always, in {@code Component.ringColor}, so the frame reads as set
- * into the panel; a disabled component has no ring. The theme sets {@code Component.focusColor} to the
- * same colour, so gaining focus changes nothing here. The properties file names these classes as the
- * {@code *.border} of fields, combo boxes, spinners, buttons and scroll panes.
+ * <p>The ring takes the space FlatLaf reserves as {@code Component.focusWidth} for its focus ring,
+ * which these borders never paint: focus does not change the frame. Colours:
+ * {@code Component.ringShadowColor} and {@code Component.ringHighlightColor}. The properties file names
+ * these classes as the {@code *.border} of fields, combo boxes, spinners, buttons and scroll panes.
  */
 public final class LagoonBorders {
 
     private LagoonBorders() {
     }
 
-    static void paintRing(Component c, Graphics g, int x, int y, int width, int height, int focusWidth, int arc) {
-        Color ring = UIManager.getColor("Component.ringColor");
-        if (ring == null || focusWidth <= 0 || !c.isEnabled()) {
+    static void paintRing(Component c, Graphics g, int x, int y, int width, int height, int focusWidth) {
+        Color shadow = UIManager.getColor("Component.ringShadowColor");
+        Color highlight = UIManager.getColor("Component.ringHighlightColor");
+        if (shadow == null || highlight == null || focusWidth <= 0 || !c.isEnabled()) {
             return;
         }
-        Graphics2D g2 = (Graphics2D) g.create();
-        try {
-            FlatUIUtils.setRenderingHints(g2);
-            FlatUIUtils.paintOutlinedComponent(g2, x, y, width, height,
-                    scale((float) focusWidth), 1, 0, 0, scale((float) arc), ring, null, null);
-        } finally {
-            g2.dispose();
-        }
+        int t = scale(focusWidth);
+        g.setColor(shadow);
+        g.fillRect(x, y, width - t, t);
+        g.fillRect(x, y + t, t, height - 2 * t);
+        g.setColor(highlight);
+        g.fillRect(x + width - t, y, t, height);
+        g.fillRect(x, y + height - t, width - t, t);
     }
 
     /** Text fields, password fields and formatted text fields. */
     public static class Text extends FlatTextBorder {
         @Override
+        protected Color getFocusColor(Component c) {
+            return null;
+        }
+
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            paintRing(c, g, x, y, width, height, getFocusWidth(c), getArc(c));
+            paintRing(c, g, x, y, width, height, getFocusWidth(c));
             super.paintBorder(c, g, x, y, width, height);
         }
     }
@@ -59,8 +62,13 @@ public final class LagoonBorders {
     /** Combo boxes and spinners. */
     public static class Round extends FlatRoundBorder {
         @Override
+        protected Color getFocusColor(Component c) {
+            return null;
+        }
+
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            paintRing(c, g, x, y, width, height, getFocusWidth(c), getArc(c));
+            paintRing(c, g, x, y, width, height, getFocusWidth(c));
             super.paintBorder(c, g, x, y, width, height);
         }
     }
@@ -68,8 +76,13 @@ public final class LagoonBorders {
     /** Scroll panes. */
     public static class ScrollPane extends FlatScrollPaneBorder {
         @Override
+        protected Color getFocusColor(Component c) {
+            return null;
+        }
+
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            paintRing(c, g, x, y, width, height, getFocusWidth(c), getArc(c));
+            paintRing(c, g, x, y, width, height, getFocusWidth(c));
             super.paintBorder(c, g, x, y, width, height);
         }
     }
@@ -77,15 +90,20 @@ public final class LagoonBorders {
     /** Buttons and toggle buttons; only those that paint a frame get a ring, never a toolbar button. */
     public static class Button extends FlatButtonBorder {
         @Override
+        protected Color getFocusColor(Component c) {
+            return null;
+        }
+
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             if (paintsFrame(c)) {
-                paintRing(c, g, x, y, width, height, getFocusWidth(c), getArc(c));
+                paintRing(c, g, x, y, width, height, getFocusWidth(c));
             }
             super.paintBorder(c, g, x, y, width, height);
         }
 
         /** The cases in which {@link FlatButtonBorder} paints its frame, from public API. */
-        private static boolean paintsFrame(Component c) {
+        static boolean paintsFrame(Component c) {
             if (!(c instanceof AbstractButton) || !((AbstractButton) c).isContentAreaFilled()
                     || c.getParent() instanceof JToolBar) {
                 return false;

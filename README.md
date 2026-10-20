@@ -70,9 +70,10 @@ FlatLaf.updateUI();
   shades the unselected ones too. Its two colours are properties keys
   (`TabbedPane.unselectedBorderColor`, `TabbedPane.unselectedBottomColor`), and it handles all
   four tab placements.
-- `LagoonBorders` — fields, combo boxes, spinners, buttons and scroll panes keep a light ring
-  (`Component.ringColor`) outside their frame in every enabled state, in the space FlatLaf reserves
-  for its focus ring; gaining focus does not change it.
+- `LagoonBorders` — fields, combo boxes, spinners, buttons and scroll panes set their frame in an
+  etched ring (`Component.ringShadowColor` above and left, `Component.ringHighlightColor` below and
+  right) in every enabled state, in the space FlatLaf reserves for its focus ring; focus changes
+  neither.
 - `LagoonLabelUI`, `LagoonButtonUI` — labels and buttons keep their icon-text gap after the text
   even without an icon, text above or below an icon gets the gap twice, and buttons have an odd
   width and height. A form laid out with this theme is a few pixels roomier than with FlatLaf's
@@ -80,8 +81,12 @@ FlatLaf.updateUI();
 - Dense control heights: 21px text fields, 23px combo boxes, check boxes and radio buttons, 24px
   spinners, 25px buttons, and no minimum widths.
 
-Details a FlatLaf properties file cannot express, and that may follow as further UI delegates:
-a two-band reflection on buttons, combo arrows and table headers, and a gradient on the menubar,
+- `LagoonComboBoxUI`, `LagoonSpinnerUI` — the arrows are small raised buttons set inside the
+  frame, with solid triangles.
+- `LagoonSheen` — the two-band face of buttons and arrow buttons: a bright top, a darker band a
+  little above the middle, a light lower part; darker when pressed, lined in blue on hover.
+
+Still to follow as further UI delegates: the sheen on table headers, and a gradient on the menubar,
 toolbar and scroll thumb.
 
 ## Notes for applications
