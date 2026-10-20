@@ -12,6 +12,9 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.JScrollBar;
+import javax.swing.JTable;
+import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -50,7 +53,7 @@ class FlatLagoonLafTest {
         assertEquals(new Color(0x5F6265), UIManager.getColor("Component.borderColor"));
         assertEquals(2, UIManager.getInt("Component.arc"));
         assertEquals("card", UIManager.getString("TabbedPane.tabType"));
-        assertEquals(15, UIManager.getInt("ScrollBar.width"));
+        assertEquals(16, UIManager.getInt("ScrollBar.width"));
         assertEquals(new Insets(1, 1, 1, 1), UIManager.getInsets("Table.cellMargins"));
     }
 
@@ -181,5 +184,62 @@ class FlatLagoonLafTest {
         FlatLightLaf.setup();
         SwingUtilities.updateComponentTreeUI(bar);
         assertEquals(0, bar.getComponent(0).getPreferredSize().height);
+    }
+
+    @Test
+    void aTablesVerticalScrollBarStartsBelowItsHeaderWithSquareButtonsInsideItsLine() {
+        FlatLagoonLaf.setup();
+        JTable table = new JTable(200, 3);
+        JScrollPane scrollPane = new JScrollPane(table);
+        // What JTable does on addNotify, which a headless test never reaches.
+        scrollPane.setColumnHeaderView(table.getTableHeader());
+        scrollPane.setSize(400, 300);
+        scrollPane.doLayout();
+        JScrollBar bar = scrollPane.getVerticalScrollBar();
+        bar.doLayout();
+        assertEquals(scrollPane.getColumnHeader().getY() + scrollPane.getColumnHeader().getHeight(), bar.getY());
+        assertEquals(16, bar.getWidth());
+        assertEquals(new Dimension(15, 15), bar.getComponent(0).getSize());
+        assertEquals(1, bar.getComponent(0).getX());
+    }
+
+    @Test
+    void htmlLinksInLabelsTakeTheThemesLinkColour() {
+        FlatLagoonLaf.setup();
+        javax.swing.text.html.StyleSheet css = new javax.swing.text.html.HTMLEditorKit().getStyleSheet();
+        assertEquals(new Color(0x0033CC), css.getForeground(css.getRule("a")));
+    }
+
+    /** A theme that puts its own base font into UIManager and takes it back when it is switched away from. */
+    public static final class FontOwningTheme extends FlatLightLaf {
+        static final Font FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 14);
+
+        @Override
+        public void initialize() {
+            UIManager.put("defaultFont", FONT);
+            super.initialize();
+        }
+
+        @Override
+        public void uninitialize() {
+            UIManager.put("defaultFont", null);
+            super.uninitialize();
+        }
+    }
+
+    @Test
+    void switchingFromAThemeThatTakesItsFontBackBasesFontsOnDialog12() throws Exception {
+        UIManager.setLookAndFeel(new FontOwningTheme());
+        assertEquals(Font.SANS_SERIF, UIManager.getFont("Label.font").getName());
+        FlatLagoonLaf.setup();
+        assertEquals("Dialog", UIManager.getFont("Label.font").getName());
+    }
+
+    @Test
+    void switchingAwayTakesTheBaseFontBackOutOfUIManager() {
+        FlatLagoonLaf.setup();
+        FlatLightLaf.setup();
+        // Nothing left above the new theme's own defaults: UIManager answers with the theme's font.
+        assertTrue(UIManager.get("defaultFont") == UIManager.getLookAndFeelDefaults().get("defaultFont"));
     }
 }

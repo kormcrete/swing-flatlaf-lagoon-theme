@@ -12,10 +12,10 @@ import java.awt.geom.RoundRectangle2D;
 import static com.formdev.flatlaf.util.UIScale.scale;
 
 /**
- * The small raised button of a combo box or spinner: its own rounded frame, the {@link LagoonSheen}
- * face and a solid triangle; the frame turns blue on hover. Disabled, it is flat with a grey frame and
- * arrow. The combo box and
- * spinner delegates place it inside their frame with a one-pixel gap.
+ * The small raised button of a combo box, spinner or scroll bar: its own rounded frame, the
+ * {@link LagoonSheen} face and a solid triangle; the frame turns blue on hover. Disabled, it is flat with
+ * a grey frame and arrow. The combo box and spinner delegates place it inside their frame with a
+ * one-pixel gap; the scroll bar delegate at the ends of its track.
  */
 class LagoonArrowButton extends FlatArrowButton {
 
@@ -52,25 +52,33 @@ class LagoonArrowButton extends FlatArrowButton {
                     : isHover() ? "Button.hoverBorderColor" : "Component.borderColor"));
             FlatUIUtils.paintOutline(g2, 0, 0, w, h, t, arc);
 
-            int aw = scale(arrowWidth);
-            int ah = scale(arrowHeight);
+            // arrowWidth runs across the arrow's direction, arrowHeight along it.
+            boolean across = getDirection() == SwingConstants.EAST || getDirection() == SwingConstants.WEST;
+            int aw = scale(across ? arrowHeight : arrowWidth);
+            int ah = scale(across ? arrowWidth : arrowHeight);
             int ax = (w - aw) / 2;
             int ay = (h - ah) / 2;
-            boolean up = getDirection() == SwingConstants.NORTH;
             g2.setColor(enabled ? UIManager.getColor("ComboBox.buttonArrowColor")
                     : UIManager.getColor("ComboBox.buttonDisabledArrowColor"));
-            fillTriangle(g2, ax, ay, aw, ah, up);
+            fillTriangle(g2, ax, ay, aw, ah, getDirection());
         } finally {
             g2.dispose();
         }
     }
 
-    /** Row by row, without antialiasing: 7, 5, 3, 1 pixels for a 7x4 arrow. */
-    private static void fillTriangle(Graphics2D g, int x, int y, int w, int h, boolean up) {
-        for (int i = 0; i < h; i++) {
-            int inset = Math.round(i * w / (2f * h));
-            int row = up ? y + h - 1 - i : y + i;
-            g.fillRect(x + inset, row, w - 2 * inset, 1);
+    /** Line by line from the base, without antialiasing: 7, 5, 3, 1 pixels for a 7x4 arrow. */
+    private static void fillTriangle(Graphics2D g, int x, int y, int w, int h, int direction) {
+        boolean across = direction == SwingConstants.EAST || direction == SwingConstants.WEST;
+        int base = across ? h : w;
+        int length = across ? w : h;
+        for (int i = 0; i < length; i++) {
+            int inset = Math.round(i * base / (2f * length));
+            switch (direction) {
+                case SwingConstants.NORTH: g.fillRect(x + inset, y + h - 1 - i, w - 2 * inset, 1); break;
+                case SwingConstants.WEST:  g.fillRect(x + w - 1 - i, y + inset, 1, h - 2 * inset); break;
+                case SwingConstants.EAST:  g.fillRect(x + i, y + inset, 1, h - 2 * inset); break;
+                default:                   g.fillRect(x + inset, y + i, w - 2 * inset, 1); break;
+            }
         }
     }
 }
