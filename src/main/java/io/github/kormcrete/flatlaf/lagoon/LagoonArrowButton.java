@@ -12,8 +12,9 @@ import java.awt.geom.RoundRectangle2D;
 import static com.formdev.flatlaf.util.UIScale.scale;
 
 /**
- * The small raised button of a combo box or spinner: its own rounded frame, a sheen and a solid
- * triangle with a light emboss. Disabled, it is flat with a grey frame and arrow. The combo box and
+ * The small raised button of a combo box or spinner: its own rounded frame, the {@link LagoonSheen}
+ * face and a solid triangle; the frame turns blue on hover. Disabled, it is flat with a grey frame and
+ * arrow. The combo box and
  * spinner delegates place it inside their frame with a one-pixel gap.
  */
 class LagoonArrowButton extends FlatArrowButton {
@@ -42,14 +43,13 @@ class LagoonArrowButton extends FlatArrowButton {
             RoundRectangle2D.Float outer = new RoundRectangle2D.Float(0, 0, w, h, arc, arc);
             boolean enabled = isEnabled();
             if (enabled) {
-                LagoonSheen.State state = isPressed() ? LagoonSheen.State.PRESSED
-                        : isHover() ? LagoonSheen.State.ROLLOVER : LagoonSheen.State.NORMAL;
-                LagoonSheen.paint(g2, outer, t, t, w - 2 * t, h - 2 * t, state);
+                LagoonSheen.paint(g2, outer, t, t, w - 2 * t, h - 2 * t, isPressed());
             } else {
                 g2.setColor(UIManager.getColor("Button.disabledBackground"));
                 g2.fill(outer);
             }
-            g2.setColor(UIManager.getColor(enabled ? "Component.borderColor" : "Component.disabledBorderColor"));
+            g2.setColor(UIManager.getColor(!enabled ? "Component.disabledBorderColor"
+                    : isHover() ? "Button.hoverBorderColor" : "Component.borderColor"));
             FlatUIUtils.paintOutline(g2, 0, 0, w, h, t, arc);
 
             int aw = scale(arrowWidth);
@@ -57,11 +57,6 @@ class LagoonArrowButton extends FlatArrowButton {
             int ax = (w - aw) / 2;
             int ay = (h - ah) / 2;
             boolean up = getDirection() == SwingConstants.NORTH;
-            if (enabled) {
-                // light emboss one pixel to the right of the triangle
-                g2.setColor(UIManager.getColor("Component.ringHighlightColor"));
-                fillTriangle(g2, ax + scale(1), ay, aw, ah, up);
-            }
             g2.setColor(enabled ? UIManager.getColor("ComboBox.buttonArrowColor")
                     : UIManager.getColor("ComboBox.buttonDisabledArrowColor"));
             fillTriangle(g2, ax, ay, aw, ah, up);

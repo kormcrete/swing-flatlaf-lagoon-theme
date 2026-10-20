@@ -83,11 +83,12 @@ FlatLaf.updateUI();
 
 - `LagoonComboBoxUI`, `LagoonSpinnerUI` — the arrows are small raised buttons set inside the
   frame, with solid triangles.
-- `LagoonSheen` — the two-band face of buttons and arrow buttons: a bright top, a darker band a
-  little above the middle, a light lower part; darker when pressed, lined in blue on hover.
+- `LagoonSheen` — the raised face of buttons and arrow buttons: a soft gradient under a
+  one-pixel highlight, turned over and darker when pressed (`Lagoon.sheen.*` keys); hover shows
+  in the frame.
 
-Still to follow as further UI delegates: the sheen on table headers, and a gradient on the menubar,
-toolbar and scroll thumb.
+Still to follow as further UI delegates: the raised face on table headers, and a gradient on the
+menubar, toolbar and scroll thumb.
 
 ## Notes for applications
 

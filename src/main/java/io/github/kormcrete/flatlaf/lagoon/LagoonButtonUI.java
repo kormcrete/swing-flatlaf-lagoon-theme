@@ -57,7 +57,7 @@ public class LagoonButtonUI extends FlatButtonUI {
             float h = c.getHeight() - 2 * fw;
             LagoonSheen.paint(g2, new RoundRectangle2D.Float(fw, fw, w, h, arc, arc),
                     fw + bw, fw + bw, w - 2 * bw, h - 2 * bw,
-                    LagoonSheen.state(((AbstractButton) c).getModel(), selected));
+                    LagoonSheen.pressed(((AbstractButton) c).getModel(), selected));
         } finally {
             g2.dispose();
         }
