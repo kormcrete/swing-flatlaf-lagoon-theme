@@ -101,6 +101,12 @@ class FlatLagoonLafTest {
         int text = label.getFontMetrics(label.getFont()).stringWidth("Username");
         assertEquals(text + label.getIconTextGap(), label.getPreferredSize().width);
         assertEquals(text, new JLabel("<html>Username</html>").getPreferredSize().width);
+        // Swing derives the minimum from the preferred size; the gap must not be added twice.
+        assertEquals(label.getPreferredSize().width, label.getMinimumSize().width);
+        // A renderer is a label too, but its size is a cell's.
+        javax.swing.DefaultListCellRenderer renderer = new javax.swing.DefaultListCellRenderer();
+        renderer.setText("Username");
+        assertEquals(text + renderer.getInsets().left + renderer.getInsets().right, renderer.getPreferredSize().width);
     }
 
     @Test
