@@ -10,6 +10,7 @@ import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 
 /**
  * Card tabs where the unselected tabs are framed and shaded too, so the selected one reads as
@@ -17,11 +18,14 @@ import java.awt.Graphics2D;
  *
  * <p>Colours: {@code TabbedPane.unselectedBorderColor} for the frame and
  * {@code TabbedPane.unselectedBottomColor}, where the shade ends (it starts at the tab background).
+ * {@code TabbedPane.contentPadding} is the room between the content's frame and the content, on the
+ * three sides away from the tabs; the frame itself stays one line.
  */
 public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
 
     private Color unselectedBorderColor;
     private Color unselectedBottomColor;
+    private int contentPadding;
 
     public static ComponentUI createUI(JComponent c) {
         return new LagoonTabbedPaneUI();
@@ -32,6 +36,21 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
         super.installDefaults();
         unselectedBorderColor = UIManager.getColor("TabbedPane.unselectedBorderColor");
         unselectedBottomColor = UIManager.getColor("TabbedPane.unselectedBottomColor");
+        contentPadding = UIManager.getInt("TabbedPane.contentPadding");
+    }
+
+    // FlatLaf paints the frame from the separator height, not from these insets, so the room added here stays blank.
+    @Override
+    protected Insets getContentBorderInsets(int tabPlacement) {
+        Insets insets = super.getContentBorderInsets(tabPlacement);
+        if (contentPadding <= 0 || (insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0)) {
+            return insets;
+        }
+        int pad = UIScale.scale(contentPadding);
+        return new Insets(insets.top + (tabPlacement == TOP ? 0 : pad),
+                insets.left + (tabPlacement == LEFT ? 0 : pad),
+                insets.bottom + (tabPlacement == BOTTOM ? 0 : pad),
+                insets.right + (tabPlacement == RIGHT ? 0 : pad));
     }
 
     @Override

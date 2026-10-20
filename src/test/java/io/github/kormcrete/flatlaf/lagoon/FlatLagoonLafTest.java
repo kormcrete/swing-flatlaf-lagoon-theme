@@ -106,10 +106,15 @@ class FlatLagoonLafTest {
         assertEquals(text, new JLabel("<html>Username</html>").getPreferredSize().width);
         // Swing derives the minimum from the preferred size; the gap must not be added twice.
         assertEquals(label.getPreferredSize().width, label.getMinimumSize().width);
-        // A renderer is a label too, but its size is a cell's.
+        // A list renderer is a label too, but its size is a list item's or a combo box value's.
         javax.swing.DefaultListCellRenderer renderer = new javax.swing.DefaultListCellRenderer();
         renderer.setText("Username");
         assertEquals(text + renderer.getInsets().left + renderer.getInsets().right, renderer.getPreferredSize().width);
+        // A table cell keeps the gap, so a column fitted to its widest cell leaves the same room as a label.
+        javax.swing.table.DefaultTableCellRenderer cell = new javax.swing.table.DefaultTableCellRenderer();
+        cell.setText("Username");
+        assertEquals(text + cell.getIconTextGap() + cell.getInsets().left + cell.getInsets().right,
+                cell.getPreferredSize().width);
     }
 
     @Test
@@ -142,5 +147,20 @@ class FlatLagoonLafTest {
                 UIManager.getColor("Table.selectionInactiveBackground"));
         assertEquals(UIManager.getColor("List.selectionBackground"),
                 UIManager.getColor("List.selectionInactiveBackground"));
+    }
+
+    /** The frame round a tab's content is one line, with room inside it on the three sides away from the tabs. */
+    @Test
+    void tabContentSitsInsideItsFrameWithRoomToSpare() {
+        FlatLagoonLaf.setup();
+        javax.swing.JTabbedPane tabs = new javax.swing.JTabbedPane();
+        JPanel content = new JPanel();
+        tabs.addTab("Orders", content);
+        tabs.setSize(300, 200);
+        tabs.doLayout();
+        assertEquals(3, content.getX());
+        assertEquals(300 - 3, content.getX() + content.getWidth());
+        assertEquals(200 - 3, content.getY() + content.getHeight());
+        assertEquals(1, UIManager.getInt("TabbedPane.contentSeparatorHeight"));
     }
 }

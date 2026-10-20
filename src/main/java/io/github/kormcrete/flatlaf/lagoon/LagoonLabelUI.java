@@ -7,13 +7,12 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.ListCellRenderer;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.Dimension;
 
 /**
- * Labels sized by {@link CompoundSize}: the icon-text gap is kept after the text, icon or not. Labels
- * that are cell renderers keep FlatLaf's size.
+ * Labels sized by {@link CompoundSize}: the icon-text gap is kept after the text, icon or not, table
+ * cells included. List and tree renderers keep FlatLaf's size.
  */
 public class LagoonLabelUI extends FlatLabelUI {
 
@@ -35,8 +34,9 @@ public class LagoonLabelUI extends FlatLabelUI {
     // No getMinimumSize: Swing's derives it from getPreferredSize, gap included.
 
     private static Dimension adjust(JComponent c, Dimension size) {
-        // A renderer draws a cell, list item or combo value: its size is the cell's, not a label's.
-        if (c instanceof ListCellRenderer || c instanceof TableCellRenderer || c instanceof TreeCellRenderer) {
+        // A list or tree renderer draws a list item, combo value or tree row: its size is the item's, not a
+        // label's. A table cell keeps the gap, so a column fitted to its widest cell has a label's room.
+        if (c instanceof ListCellRenderer || c instanceof TreeCellRenderer) {
             return size;
         }
         JLabel l = (JLabel) c;
