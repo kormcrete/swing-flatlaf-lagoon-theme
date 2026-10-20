@@ -12,10 +12,14 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 
@@ -159,8 +163,23 @@ class FlatLagoonLafTest {
         tabs.setSize(300, 200);
         tabs.doLayout();
         assertEquals(3, content.getX());
+        // One line and one pixel of room below the tab.
+        assertEquals(tabs.getBoundsAt(0).y + tabs.getBoundsAt(0).height + 2, content.getY());
         assertEquals(300 - 3, content.getX() + content.getWidth());
         assertEquals(200 - 3, content.getY() + content.getHeight());
         assertEquals(1, UIManager.getInt("TabbedPane.contentSeparatorHeight"));
+    }
+
+    @Test
+    void aToolbarSeparatorKeepsItsLineInAFlowLayoutAndNoSizeOutlivesASwitch() {
+        FlatLagoonLaf.setup();
+        JToolBar bar = new JToolBar();
+        bar.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 1));
+        bar.addSeparator();
+        assertEquals(new Dimension(16, 12), bar.getComponent(0).getPreferredSize());
+
+        FlatLightLaf.setup();
+        SwingUtilities.updateComponentTreeUI(bar);
+        assertEquals(0, bar.getComponent(0).getPreferredSize().height);
     }
 }

@@ -18,14 +18,15 @@ import java.awt.Insets;
  *
  * <p>Colours: {@code TabbedPane.unselectedBorderColor} for the frame and
  * {@code TabbedPane.unselectedBottomColor}, where the shade ends (it starts at the tab background).
- * {@code TabbedPane.contentPadding} is the room between the content's frame and the content, on the
- * three sides away from the tabs; the frame itself stays one line.
+ * {@code TabbedPane.contentMargins} is the room between the content's frame and the content, given as
+ * insets for tabs on top (its top is the side next to the tabs) and turned with the tabs; the frame
+ * itself stays one line.
  */
 public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
 
     private Color unselectedBorderColor;
     private Color unselectedBottomColor;
-    private int contentPadding;
+    private Insets contentMargins;
 
     public static ComponentUI createUI(JComponent c) {
         return new LagoonTabbedPaneUI();
@@ -36,21 +37,20 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
         super.installDefaults();
         unselectedBorderColor = UIManager.getColor("TabbedPane.unselectedBorderColor");
         unselectedBottomColor = UIManager.getColor("TabbedPane.unselectedBottomColor");
-        contentPadding = UIManager.getInt("TabbedPane.contentPadding");
+        contentMargins = UIManager.getInsets("TabbedPane.contentMargins");
     }
 
     // FlatLaf paints the frame from the separator height, not from these insets, so the room added here stays blank.
     @Override
     protected Insets getContentBorderInsets(int tabPlacement) {
         Insets insets = super.getContentBorderInsets(tabPlacement);
-        if (contentPadding <= 0 || (insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0)) {
+        if (contentMargins == null || (insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0)) {
             return insets;
         }
-        int pad = UIScale.scale(contentPadding);
-        return new Insets(insets.top + (tabPlacement == TOP ? 0 : pad),
-                insets.left + (tabPlacement == LEFT ? 0 : pad),
-                insets.bottom + (tabPlacement == BOTTOM ? 0 : pad),
-                insets.right + (tabPlacement == RIGHT ? 0 : pad));
+        Insets pad = new Insets(0, 0, 0, 0);
+        rotateInsets(UIScale.scale(contentMargins), pad, tabPlacement);
+        return new Insets(insets.top + pad.top, insets.left + pad.left,
+                insets.bottom + pad.bottom, insets.right + pad.right);
     }
 
     @Override

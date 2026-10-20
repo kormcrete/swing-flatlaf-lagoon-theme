@@ -2,6 +2,7 @@ package io.github.kormcrete.flatlaf.lagoon;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatButtonBorder;
+import com.formdev.flatlaf.ui.FlatMenuBarBorder;
 import com.formdev.flatlaf.ui.FlatRoundBorder;
 import com.formdev.flatlaf.ui.FlatScrollPaneBorder;
 import com.formdev.flatlaf.ui.FlatTextBorder;
@@ -13,6 +14,7 @@ import javax.swing.UIManager;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Insets;
 
 import static com.formdev.flatlaf.util.UIScale.scale;
 
@@ -23,7 +25,8 @@ import static com.formdev.flatlaf.util.UIScale.scale;
  * <p>The ring takes the space FlatLaf reserves as {@code Component.focusWidth} for its focus ring,
  * which these borders never paint: focus does not change the frame. Colours:
  * {@code Component.ringShadowColor} and {@code Component.ringHighlightColor}. The properties file names
- * these classes as the {@code *.border} of fields, combo boxes, spinners, buttons and scroll panes.
+ * these classes as the {@code *.border} of fields, combo boxes, spinners, buttons and scroll panes;
+ * {@link MenuBar} is the menu bar's, which has no ring.
  */
 public final class LagoonBorders {
 
@@ -113,6 +116,22 @@ public final class LagoonBorders {
                     || FlatClientProperties.BUTTON_TYPE_BORDERLESS.equals(type)
                     || FlatClientProperties.BUTTON_TYPE_HELP.equals(type)
                     || FlatClientProperties.BUTTON_TYPE_TAB.equals(type));
+        }
+    }
+
+    /** The menu bar: FlatLaf's bottom line, with {@code MenuBar.padding} added around the items. */
+    public static class MenuBar extends FlatMenuBarBorder {
+        @Override
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets = super.getBorderInsets(c, insets);
+            Insets padding = UIManager.getInsets("MenuBar.padding");
+            if (padding != null) {
+                insets.top += scale(padding.top);
+                insets.left += scale(padding.left);
+                insets.bottom += scale(padding.bottom);
+                insets.right += scale(padding.right);
+            }
+            return insets;
         }
     }
 }

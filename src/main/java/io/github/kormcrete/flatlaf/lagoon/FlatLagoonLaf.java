@@ -57,6 +57,8 @@ public class FlatLagoonLaf extends FlatLightLaf {
         // The arrows of combo boxes and spinners are small raised buttons inside the frame.
         defaults.put("ComboBoxUI", LagoonComboBoxUI.class.getName());
         defaults.put("SpinnerUI", LagoonSpinnerUI.class.getName());
+        // Toolbar separators keep their line where a toolbar is laid out by preferred sizes.
+        defaults.put("ToolBarSeparatorUI", LagoonToolBarSeparatorUI.class.getName());
         // Two-tone etched group border; a properties file cannot name a Border class.
         defaults.put("TitledBorder.border", new BorderUIResource.EtchedBorderUIResource(
                 new Color(0xF7F8F8), new Color(0xBCBDBE)));
