@@ -4,7 +4,14 @@ import com.formdev.flatlaf.FlatLightLaf;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -37,7 +44,7 @@ class FlatLagoonLafTest {
         // A handful of keys that only the properties file sets; FlatLightLaf's own values differ.
         assertEquals(new Color(0xF5F6F7), UIManager.getColor("Panel.background"));
         assertEquals(new Color(0x5F6265), UIManager.getColor("Component.borderColor"));
-        assertEquals(0, UIManager.getInt("Component.arc"));
+        assertEquals(2, UIManager.getInt("Component.arc"));
         assertEquals("card", UIManager.getString("TabbedPane.tabType"));
         assertEquals(15, UIManager.getInt("ScrollBar.width"));
         assertEquals(new Insets(1, 1, 1, 1), UIManager.getInsets("Table.cellMargins"));
@@ -47,6 +54,14 @@ class FlatLagoonLafTest {
     void registersItsOwnDelegatesAndBorders() {
         FlatLagoonLaf.setup();
         assertEquals(LagoonTabbedPaneUI.class.getName(), UIManager.getString("TabbedPaneUI"));
+        // Named by class in the properties file: a misspelt name only logs, so check each one resolved.
+        assertEquals(LagoonBorders.Text.class, UIManager.getBorder("TextField.border").getClass());
+        assertEquals(LagoonBorders.Text.class, UIManager.getBorder("PasswordField.border").getClass());
+        assertEquals(LagoonBorders.Round.class, UIManager.getBorder("ComboBox.border").getClass());
+        assertEquals(LagoonBorders.Round.class, UIManager.getBorder("Spinner.border").getClass());
+        assertEquals(LagoonBorders.Button.class, UIManager.getBorder("Button.border").getClass());
+        assertEquals(LagoonBorders.Button.class, UIManager.getBorder("ToggleButton.border").getClass());
+        assertEquals(LagoonBorders.ScrollPane.class, UIManager.getBorder("ScrollPane.border").getClass());
         Border titled = UIManager.getBorder("TitledBorder.border");
         assertEquals(new Insets(2, 2, 2, 2), titled.getBorderInsets(new JPanel()));
     }
@@ -77,6 +92,37 @@ class FlatLagoonLafTest {
         FlatLightLaf.setup();
         FlatLagoonLaf.setup();
         assertEquals("Dialog", UIManager.getFont("Label.font").getName());
+    }
+
+    @Test
+    void labelsKeepTheirIconTextGapAfterTheText() {
+        FlatLagoonLaf.setup();
+        JLabel label = new JLabel("Username");
+        int text = label.getFontMetrics(label.getFont()).stringWidth("Username");
+        assertEquals(text + label.getIconTextGap(), label.getPreferredSize().width);
+        assertEquals(text, new JLabel("<html>Username</html>").getPreferredSize().width);
+    }
+
+    @Test
+    void buttonsKeepTheGapAfterTheTextAndAnOddSize() {
+        FlatLagoonLaf.setup();
+        JButton save = new JButton("Speichern");
+        int text = save.getFontMetrics(save.getFont()).stringWidth("Speichern");
+        java.awt.Insets in = save.getInsets();
+        assertEquals((text + save.getIconTextGap() + in.left + in.right) | 1, save.getPreferredSize().width);
+        assertEquals(1, save.getPreferredSize().height % 2);
+    }
+
+    /** Field, combo, spinner and button heights the layout of a form is built on. */
+    @Test
+    void sizesControlsForADenseForm() {
+        FlatLagoonLaf.setup();
+        assertEquals(21, new JTextField(10).getPreferredSize().height);
+        assertEquals(21, new JPasswordField(10).getPreferredSize().height);
+        assertEquals(23, new JComboBox<>(new String[]{"x"}).getPreferredSize().height);
+        assertEquals(24, new JSpinner().getPreferredSize().height);
+        assertEquals(25, new JButton("Save").getPreferredSize().height);
+        assertEquals(23, new JCheckBox("x").getPreferredSize().height);
     }
 
     @Test

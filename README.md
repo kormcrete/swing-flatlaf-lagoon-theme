@@ -13,7 +13,7 @@ A classic light theme for [FlatLaf](https://www.formdev.com/flatlaf/).
 <sub>Windows (left) and macOS (right): <code>LagoonGallery</code>, captured at 2x with
 <a href="https://github.com/kormcrete/swing-ui-agent">swing-ui-agent</a>.</sub>
 
-A neutral grey palette, square corners, one-pixel dark frames, bevelled buttons, framed card tabs
+A neutral grey palette, softened corners, one-pixel dark frames set in a light ring, bevelled buttons, framed card tabs
 on a framed content area, white tables with a grid and blue scroll bars with buttons: the dense,
 clearly delimited look of a traditional desktop application, for forms and data-heavy screens —
 with everything FlatLaf brings underneath: HiDPI scaling, native window decorations, SVG icons
@@ -70,6 +70,15 @@ FlatLaf.updateUI();
   shades the unselected ones too. Its two colours are properties keys
   (`TabbedPane.unselectedBorderColor`, `TabbedPane.unselectedBottomColor`), and it handles all
   four tab placements.
+- `LagoonBorders` — fields, combo boxes, spinners, buttons and scroll panes keep a light ring
+  (`Component.ringColor`) outside their frame in every enabled state, in the space FlatLaf reserves
+  for its focus ring; gaining focus does not change it.
+- `LagoonLabelUI`, `LagoonButtonUI` — labels and buttons keep their icon-text gap after the text
+  even without an icon, text above or below an icon gets the gap twice, and buttons have an odd
+  width and height. A form laid out with this theme is a few pixels roomier than with FlatLaf's
+  own sizing.
+- Dense control heights: 21px text fields, 23px combo boxes, check boxes and radio buttons, 24px
+  spinners, 25px buttons, and no minimum widths.
 
 Details a FlatLaf properties file cannot express, and that may follow as further UI delegates:
 a two-band reflection on buttons, combo arrows and table headers, and a gradient on the menubar,

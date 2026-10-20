@@ -50,6 +50,10 @@ public class FlatLagoonLaf extends FlatLightLaf {
         UIDefaults defaults = super.getDefaults();
         // Frames the unselected tabs too, which no key can express.
         defaults.put("TabbedPaneUI", LagoonTabbedPaneUI.class.getName());
+        // Label and button sizes keep the icon-text gap after the text (CompoundSize).
+        defaults.put("LabelUI", LagoonLabelUI.class.getName());
+        defaults.put("ButtonUI", LagoonButtonUI.class.getName());
+        defaults.put("ToggleButtonUI", LagoonButtonUI.Toggle.class.getName());
         // Two-tone etched group border; a properties file cannot name a Border class.
         defaults.put("TitledBorder.border", new BorderUIResource.EtchedBorderUIResource(
                 new Color(0xF7F8F8), new Color(0xBCBDBE)));
