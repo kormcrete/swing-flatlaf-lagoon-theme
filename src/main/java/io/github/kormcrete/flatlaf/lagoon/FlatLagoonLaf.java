@@ -30,10 +30,19 @@ public class FlatLagoonLaf extends FlatLightLaf {
      * @return whether the look-and-feel was installed, as {@link FlatLaf#setup(javax.swing.LookAndFeel)}
      */
     public static boolean setup() {
-        if (UIManager.get("defaultFont") == null) {
+        if (!applicationSetDefaultFont()) {
             UIManager.put("defaultFont", BASE_FONT);
         }
         return FlatLaf.setup(new FlatLagoonLaf());
+    }
+
+    /**
+     * {@code UIManager.get} also reads the installed look-and-feel's defaults, and every FlatLaf theme
+     * puts a {@code defaultFont} there; that one is the previous theme's, not the application's.
+     */
+    private static boolean applicationSetDefaultFont() {
+        Object font = UIManager.get("defaultFont");
+        return font != null && font != UIManager.getLookAndFeelDefaults().get("defaultFont");
     }
 
     @Override

@@ -1,5 +1,6 @@
 package io.github.kormcrete.flatlaf.lagoon;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +66,17 @@ class FlatLagoonLafTest {
         FlatLagoonLaf.setup();
         Font label = UIManager.getFont("Label.font");
         assertEquals(Font.SANS_SERIF, label.getName());
+    }
+
+    /**
+     * Every FlatLaf theme puts a {@code defaultFont} into its own defaults, which
+     * {@code UIManager.get} also reads: that one is the previous theme's, not the application's.
+     */
+    @Test
+    void switchingFromAnotherFlatLafThemeStillBasesFontsOnDialog12() {
+        FlatLightLaf.setup();
+        FlatLagoonLaf.setup();
+        assertEquals("Dialog", UIManager.getFont("Label.font").getName());
     }
 
     @Test
