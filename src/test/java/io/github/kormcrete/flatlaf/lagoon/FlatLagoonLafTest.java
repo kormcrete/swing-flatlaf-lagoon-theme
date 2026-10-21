@@ -74,6 +74,7 @@ class FlatLagoonLafTest {
         assertEquals(LagoonComboBoxUI.class.getName(), UIManager.getString("ComboBoxUI"));
         assertEquals(LagoonSpinnerUI.class.getName(), UIManager.getString("SpinnerUI"));
         assertEquals(LagoonButtonUI.class.getName(), UIManager.getString("ButtonUI"));
+        assertEquals(LagoonTableHeaderUI.class.getName(), UIManager.getString("TableHeaderUI"));
         Border titled = UIManager.getBorder("TitledBorder.border");
         assertEquals(new Insets(2, 2, 2, 2), titled.getBorderInsets(new JPanel()));
     }
@@ -611,6 +612,31 @@ class FlatLagoonLafTest {
         assertEquals(16, bar.getWidth());
         assertEquals(new Dimension(15, 15), bar.getComponent(0).getSize());
         assertEquals(1, bar.getComponent(0).getX());
+    }
+
+    /**
+     * A header the theme draws is as tall as its text, sorted or not; one drawn by the application's renderer keeps
+     * the renderer's height; the cell border keeps its margins either way.
+     */
+    @Test
+    void aHeaderTheThemeDrawsIsAsTallAsItsText() {
+        FlatLagoonLaf.setup();
+        JTable table = new JTable(new javax.swing.table.DefaultTableModel(new Object[]{"Name", "Size"}, 3));
+        table.setAutoCreateRowSorter(true);
+        int text = table.getFontMetrics(UIManager.getFont("TableHeader.font")).getHeight();
+        assertEquals(text, table.getTableHeader().getPreferredSize().height);
+        table.getRowSorter().toggleSortOrder(0);
+        assertEquals(text, table.getTableHeader().getPreferredSize().height, "sorted");
+
+        JTable own = new JTable(1, 1);
+        own.getTableHeader().setDefaultRenderer((t, value, selected, focus, row, column) -> {
+            JLabel label = new JLabel(String.valueOf(value));
+            label.setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+            label.setPreferredSize(new Dimension(40, 22));
+            return label;
+        });
+        assertEquals(22, own.getTableHeader().getPreferredSize().height, "the application's renderer");
+        assertEquals(new Insets(1, 3, 1, 3), UIManager.getBorder("TableHeader.cellBorder").getBorderInsets(new JLabel()));
     }
 
     @Test

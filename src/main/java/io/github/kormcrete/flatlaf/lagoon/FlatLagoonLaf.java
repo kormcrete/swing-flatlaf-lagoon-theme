@@ -107,6 +107,8 @@ public class FlatLagoonLaf extends FlatLightLaf {
         defaults.put("ScrollBarUI", LagoonScrollBarUI.class.getName());
         // Boolean cells in the theme's check box; FlatLaf's table renderer has its own.
         defaults.put("TableUI", LagoonTableUI.class.getName());
+        // A header the theme draws is as tall as its text.
+        defaults.put("TableHeaderUI", LagoonTableHeaderUI.class.getName());
         // A tree asking for no lines (JTree.lineStyle "None") gets none.
         defaults.put("TreeUI", LagoonTreeUI.class.getName());
         // The corner above a table's vertical scroll bar, beside its header: plain ground. A new one per
