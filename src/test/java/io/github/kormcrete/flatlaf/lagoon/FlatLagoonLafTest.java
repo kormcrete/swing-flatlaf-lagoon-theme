@@ -649,9 +649,21 @@ class FlatLagoonLafTest {
      * A header the theme draws is as tall as its text, sorted or not; one drawn by the application's renderer keeps
      * the renderer's height; the cell border keeps its margins either way.
      */
+    /** By default a header is as tall as FlatLaf Light's. */
+    @Test
+    void aHeaderIsAsTallAsFlatLafLightsByDefault() {
+        FlatLightLaf.setup();
+        int light = new JTable(new javax.swing.table.DefaultTableModel(new Object[]{"Name", "Size"}, 3))
+                .getTableHeader().getPreferredSize().height;
+        FlatLagoonLaf.setup();
+        JTable table = new JTable(new javax.swing.table.DefaultTableModel(new Object[]{"Name", "Size"}, 3));
+        assertEquals(light, table.getTableHeader().getPreferredSize().height);
+    }
+
+    /** With TableHeader.height 0 (the dense look), a header the theme draws is as tall as its text. */
     @Test
     void aHeaderTheThemeDrawsIsAsTallAsItsText() {
-        FlatLagoonLaf.setup();
+        dense();
         JTable table = new JTable(new javax.swing.table.DefaultTableModel(new Object[]{"Name", "Size"}, 3));
         table.setAutoCreateRowSorter(true);
         int text = table.getFontMetrics(UIManager.getFont("TableHeader.font")).getHeight();
@@ -720,9 +732,14 @@ class FlatLagoonLafTest {
             "OptionPane.border", "OptionPane.buttonAreaBorder", "OptionPane.iconMessageGap",
             "OptionPane.buttonOrientation", "OptionPane.isYesLast", "OptionPane.buttonMinimumWidth",
             "OptionPane.setButtonMargin", "OptionPane.maxCharactersPerLine", "OptionPane.sameSizeButtons",
-            "Panel.background", "defaultFont", "Label.font"};
+            "Panel.background", "defaultFont", "Label.font", "Button.margin", "CheckBox.margin",
+            "RadioButton.margin", "TabbedPane.tabHeight", "TabbedPane.tabInsets", "TabbedPane.tabAreaInsets",
+            "TableHeader.height", "TableHeader.cellMargins", "ProgressBar.horizontalSize", "ProgressBar.verticalSize"};
 
-    /** Paddings, row heights, trees, arrows, tab frame, message layout, panel colour and font: Light's. */
+    /**
+     * Paddings, row heights, trees, arrows, tab frame and sizes, button, check box and radio margins, table header,
+     * progress bar, message layout, panel colour and font: Light's.
+     */
     @Test
     void layoutSizesFontAndPanelColourAreFlatLafLights() {
         FlatLightLaf.setup();
@@ -753,6 +770,13 @@ class FlatLagoonLafTest {
         assertEquals(16, UIManager.getInt("Table.rowHeight"));
         assertTrue(UIManager.getBoolean("TabbedPane.hasFullBorder"));
         assertEquals("triangle", UIManager.getString("Component.arrowType"));
+        assertEquals(new Insets(3, 14, 3, 14), UIManager.getInsets("Button.margin"));
+        assertEquals(new Insets(4, 5, 4, 5), UIManager.getInsets("RadioButton.margin"));
+        assertEquals(20, UIManager.getInt("TabbedPane.tabHeight"));
+        assertEquals(new Insets(1, 2, 0, 0), UIManager.getInsets("TabbedPane.tabAreaInsets"));
+        assertEquals(0, UIManager.getInt("TableHeader.height"));
+        assertEquals(new Insets(1, 3, 1, 3), UIManager.getInsets("TableHeader.cellMargins"));
+        assertEquals(new java.awt.Dimension(146, 16), UIManager.getDimension("ProgressBar.horizontalSize"));
     }
 
     /** Light's font after a live switch, as an application with a theme menu does it; Dialog 12 with the switch. */
