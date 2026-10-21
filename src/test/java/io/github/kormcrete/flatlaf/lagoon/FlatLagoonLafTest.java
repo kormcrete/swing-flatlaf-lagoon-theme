@@ -380,10 +380,12 @@ class FlatLagoonLafTest {
         int check = Math.max(text, UIManager.getIcon("CheckBoxMenuItem.checkIcon").getIconHeight());
         int radio = Math.max(text, UIManager.getIcon("RadioButtonMenuItem.checkIcon").getIconHeight());
         assertEquals(java.util.Arrays.asList(text + 6, text + 4, check + 6, 3, radio + 6), heights(plain));
-        assertEquals(24, p[0][0], "submenu text");
-        assertEquals(24, p[1][0], "item text");
-        assertEquals(24, p[2][p[2].length - 1], "check box item text");
-        assertEquals(24, p[4][p[4].length - 1], "radio button item text");
+        // where the text starts; its ink starts a glyph's side bearing later, which differs from font to font
+        int k = inkBearing(sub, "Kxyz");
+        assertEquals(TEXT_START, p[0][0] - k, "submenu text");
+        assertEquals(TEXT_START, p[1][0] - k, "item text");
+        assertEquals(TEXT_START, p[2][p[2].length - 1] - k, "check box item text");
+        assertEquals(TEXT_START, p[4][p[4].length - 1] - k, "radio button item text");
         assertTrue(separatorLineShows(plain, 3), "the separator's line lies inside its 3px");
 
         javax.swing.JPopupMenu withIcons = new javax.swing.JPopupMenu();
@@ -392,8 +394,32 @@ class FlatLagoonLafTest {
         int[][] w = menuItemInk(withIcons);
         assertEquals(java.util.Arrays.asList(Math.max(text, 16) + 5, text + 4), heights(withIcons));
         assertEquals(23, w[0][0], "icon");
-        assertEquals(44, w[0][1], "text after the icon");
-        assertEquals(44, w[1][0], "text of an item without one");
+        assertEquals(TEXT_START + 20, w[0][1] - k, "text after the icon");
+        assertEquals(TEXT_START + 20, w[1][0] - k, "text of an item without one");
+    }
+
+    /** Where a popup without icons starts its items' text. */
+    private static final int TEXT_START = 23;
+
+    /** Columns from where the component's font starts the text to its first column of ink, as a label paints it. */
+    private static int inkBearing(javax.swing.JComponent c, String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(c.getFont());
+        label.setSize(label.getPreferredSize());
+        BufferedImage image = new BufferedImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, image.getWidth(), image.getHeight());
+        label.paint(g);
+        g.dispose();
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                if (luminance(image.getRGB(x, y)) < 120) {
+                    return x - label.getInsets().left;
+                }
+            }
+        }
+        throw new AssertionError("no ink for " + text);
     }
 
     private static boolean separatorLineShows(javax.swing.JPopupMenu popup, int index) {
