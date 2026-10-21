@@ -177,6 +177,24 @@ class FlatLagoonLafTest {
     }
 
     @Test
+    void aFieldEditingATableCellKeepsTheFieldsFrameAndInsets() {
+        FlatLagoonLaf.setup();
+        JTable table = new JTable(2, 2);
+        JTextField field = new JTextField();
+        table.setDefaultEditor(Object.class, new javax.swing.DefaultCellEditor(field));
+        table.editCellAt(0, 0);
+        assertTrue(table.getEditorComponent() == field, "not editing");
+        assertEquals(new JTextField().getInsets(), field.getInsets());
+        field.setSize(80, 19);
+        BufferedImage image = new BufferedImage(80, 19, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        field.getBorder().paintBorder(field, g, 0, 0, 80, 19);
+        g.dispose();
+        assertEquals(UIManager.getColor("Component.ringShadowColor").getRGB(), image.getRGB(0, 9));
+        assertEquals(UIManager.getColor("Component.borderColor").getRGB(), image.getRGB(1, 9));
+    }
+
+    @Test
     void buttonsKeepTheGapAfterTheTextAndAnOddSize() {
         FlatLagoonLaf.setup();
         JButton save = new JButton("Speichern");

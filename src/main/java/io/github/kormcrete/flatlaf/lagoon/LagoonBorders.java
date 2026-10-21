@@ -52,11 +52,20 @@ public final class LagoonBorders {
         g.fillRect(x, y + height - t, width - t, t);
     }
 
-    /** Text fields, password fields and formatted text fields. */
+    /**
+     * Text fields, password fields and formatted text fields. A field editing a table or tree cell keeps the
+     * frame, ring and insets it has anywhere else, where FlatLaf strips them: the text then sits where it sits
+     * in the cell before editing starts.
+     */
     public static class Text extends FlatTextBorder {
         @Override
         protected Color getFocusColor(Component c) {
             return null;
+        }
+
+        @Override
+        protected boolean isCellEditor(Component c) {
+            return false;
         }
 
         @Override
