@@ -1,10 +1,13 @@
 package io.github.kormcrete.flatlaf.lagoon;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatComboBoxUI;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import java.awt.Container;
 import java.awt.Insets;
@@ -28,6 +31,22 @@ public class LagoonComboBoxUI extends FlatComboBoxUI {
     @Override
     protected JButton createArrowButton() {
         return new LagoonArrowButton(SwingConstants.SOUTH, 7, 4);
+    }
+
+    /**
+     * FlatLaf pads an editable box's text field like a list value; {@code ComboBox.editorMargins} pads it like a
+     * field instead. Only for FlatLaf's borderless editor: a text field with a border of its own keeps FlatLaf's.
+     */
+    @Override
+    protected void configureEditor() {
+        super.configureEditor();
+        Insets margins = UIManager.getInsets("ComboBox.editorMargins");
+        if (margins != null && editor instanceof JTextField) {
+            Insets own = ((JTextField) editor).getInsets();
+            if (own.top == 0 && own.left == 0 && own.bottom == 0 && own.right == 0) {
+                ((JTextField) editor).putClientProperty(FlatClientProperties.TEXT_FIELD_PADDING, margins);
+            }
+        }
     }
 
     @Override

@@ -3,19 +3,27 @@ package io.github.kormcrete.flatlaf.lagoon;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatButtonBorder;
 import com.formdev.flatlaf.ui.FlatMenuBarBorder;
+import com.formdev.flatlaf.ui.FlatMenuItemBorder;
 import com.formdev.flatlaf.ui.FlatRoundBorder;
 import com.formdev.flatlaf.ui.FlatScrollPaneBorder;
 import com.formdev.flatlaf.ui.FlatTextBorder;
 
 import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.UIManager;
+import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Paint;
@@ -30,7 +38,7 @@ import static com.formdev.flatlaf.util.UIScale.scale;
  * which these borders never paint: focus does not change the frame. Colours:
  * {@code Component.ringShadowColor} and {@code Component.ringHighlightColor}. The properties file names
  * these classes as the {@code *.border} of fields, combo boxes, spinners, buttons and scroll panes;
- * {@link MenuBar} is the menu bar's, which has no ring.
+ * {@link MenuBar} is the menu bar's and {@link MenuItem} a popup menu item's, which have no ring.
  */
 public final class LagoonBorders {
 
@@ -162,6 +170,55 @@ public final class LagoonBorders {
                 insets.right += scale(padding.right);
             }
             return insets;
+        }
+    }
+
+    /**
+     * An item of a popup menu. Its text starts {@code MenuItem.textInset} in when no item of the popup has an
+     * icon; when one does, every item's icon column starts {@code MenuItem.iconInset} in, so the text of all
+     * items lines up behind it. An item with an icon is a pixel taller. Top, bottom and right come from the
+     * margin; an item whose margin the application set keeps FlatLaf's border.
+     */
+    public static class MenuItem extends FlatMenuItemBorder {
+        @Override
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets = super.getBorderInsets(c, insets);
+            if (!(c instanceof JMenuItem) || !(c.getParent() instanceof JPopupMenu)
+                    || !(((JMenuItem) c).getMargin() instanceof UIResource)) {
+                return insets;
+            }
+            JMenuItem item = (JMenuItem) c;
+            if (anyIcon(c.getParent())) {
+                insets.left = scale(UIManager.getInt("MenuItem.iconInset"));
+            } else {
+                // FlatLaf's icon column is the item's check mark, or empty, followed by the icon-text gap
+                Icon check = checkIcon(item);
+                int column = check != null ? check.getIconWidth() : 0;
+                insets.left = scale(UIManager.getInt("MenuItem.textInset")) - column - scale(item.getIconTextGap());
+            }
+            if (item.getIcon() != null) {
+                insets.bottom += scale(1);
+            }
+            return insets;
+        }
+
+        private static boolean anyIcon(Container popup) {
+            for (Component c : popup.getComponents()) {
+                if (c instanceof JMenuItem && ((JMenuItem) c).getIcon() != null) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static Icon checkIcon(JMenuItem item) {
+            if (item instanceof JCheckBoxMenuItem) {
+                return UIManager.getIcon("CheckBoxMenuItem.checkIcon");
+            }
+            if (item instanceof JRadioButtonMenuItem) {
+                return UIManager.getIcon("RadioButtonMenuItem.checkIcon");
+            }
+            return null;
         }
     }
 }

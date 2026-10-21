@@ -218,6 +218,190 @@ class FlatLagoonLafTest {
         assertEquals(23, new JCheckBox("x").getPreferredSize().height);
     }
 
+    /**
+     * An editable combo box's text starts where a field's does, so a column of fields and combo boxes reads as
+     * one edge; a list value (its renderer brings a one-pixel border of its own) one pixel further in.
+     */
+    @Test
+    void aComboBoxsTextLinesUpWithAFieldsText() {
+        FlatLagoonLaf.setup();
+        JComboBox<String> editable = new JComboBox<>(new String[]{"Hello"});
+        editable.setEditable(true);
+        int field = textInkFromFrame(new JTextField("Hello"));
+        assertEquals(field, textInkFromFrame(editable), "editable combo box");
+        JComboBox<String> list = new JComboBox<>(new String[]{"Hello"});
+        assertEquals(field + 1, textInkFromFrame(list), "list value");
+        // frame, padding, the renderer's border and the arrow button: the width a form was laid out for
+        assertEquals(list.getFontMetrics(list.getFont()).stringWidth("Hello") + 29, list.getPreferredSize().width);
+    }
+
+    /**
+     * Dense menus: 19px items, 21px with an icon or a check mark, 3px separators. Text starts one column in
+     * every item of a popup: near the edge when no item has an icon, after the icon column when one does.
+     */
+    @Test
+    void menusAreDenseAndAlignTheirText() {
+        FlatLagoonLaf.setup();
+        javax.swing.Icon icon = new javax.swing.Icon() {
+            public void paintIcon(java.awt.Component c, java.awt.Graphics g, int x, int y) {
+                g.setColor(Color.BLACK);
+                g.fillRect(x, y, 16, 16);
+            }
+            public int getIconWidth() { return 16; }
+            public int getIconHeight() { return 16; }
+        };
+        javax.swing.JPopupMenu plain = new javax.swing.JPopupMenu();
+        javax.swing.JMenu sub = new javax.swing.JMenu("Kxyz");
+        sub.add(new javax.swing.JMenuItem("x"));
+        plain.add(sub);
+        plain.add(new javax.swing.JMenuItem("Kxyz"));
+        plain.add(new javax.swing.JCheckBoxMenuItem("Kxyz", true));
+        plain.addSeparator();
+        plain.add(new javax.swing.JRadioButtonMenuItem("Kxyz", true));
+        int[][] p = menuItemInk(plain);
+        assertEquals(java.util.Arrays.asList(21, 19, 21, 3, 21), heights(plain));
+        assertEquals(24, p[0][0], "submenu text");
+        assertEquals(24, p[1][0], "item text");
+        assertEquals(24, p[2][p[2].length - 1], "check box item text");
+        assertEquals(24, p[4][p[4].length - 1], "radio button item text");
+        assertTrue(separatorLineShows(plain, 3), "the separator's line lies inside its 3px");
+
+        javax.swing.JPopupMenu withIcons = new javax.swing.JPopupMenu();
+        withIcons.add(new javax.swing.JMenuItem("Kxyz", icon));
+        withIcons.add(new javax.swing.JMenuItem("Kxyz"));
+        int[][] w = menuItemInk(withIcons);
+        assertEquals(java.util.Arrays.asList(21, 19), heights(withIcons));
+        assertEquals(23, w[0][0], "icon");
+        assertEquals(44, w[0][1], "text after the icon");
+        assertEquals(44, w[1][0], "text of an item without one");
+    }
+
+    private static boolean separatorLineShows(javax.swing.JPopupMenu popup, int index) {
+        java.awt.Component sep = popup.getComponent(index);
+        BufferedImage image = new BufferedImage(popup.getWidth(), popup.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        popup.paint(g);
+        g.dispose();
+        int line = UIManager.getColor("Separator.foreground").getRGB() & 0xFFFFFF;
+        for (int y = sep.getY(); y < sep.getY() + sep.getHeight(); y++) {
+            if ((image.getRGB(sep.getX() + sep.getWidth() / 2, y) & 0xFFFFFF) == line) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static java.util.List<Integer> heights(javax.swing.JPopupMenu popup) {
+        java.util.List<Integer> h = new java.util.ArrayList<>();
+        for (java.awt.Component c : popup.getComponents()) {
+            h.add(c.getHeight());
+        }
+        return h;
+    }
+
+    /** Per item: the popup columns where runs of ink (gaps over 3px apart) start. */
+    private static int[][] menuItemInk(javax.swing.JPopupMenu popup) {
+        popup.setSize(popup.getPreferredSize());
+        layOut(popup);
+        BufferedImage image = new BufferedImage(popup.getWidth(), popup.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        popup.paint(g);
+        g.dispose();
+        int[][] runs = new int[popup.getComponentCount()][];
+        for (int i = 0; i < runs.length; i++) {
+            java.awt.Component c = popup.getComponent(i);
+            java.util.List<Integer> starts = new java.util.ArrayList<>();
+            int last = -10;
+            for (int x = c.getX(); x < c.getX() + c.getWidth(); x++) {
+                for (int y = c.getY() + 1; y < c.getY() + c.getHeight() - 1; y++) {
+                    if (luminance(image.getRGB(x, y)) < 120) {
+                        if (x - last > 3) {
+                            starts.add(x);
+                        }
+                        last = x;
+                        break;
+                    }
+                }
+            }
+            runs[i] = starts.stream().mapToInt(Integer::intValue).toArray();
+        }
+        return runs;
+    }
+
+    /** A message's buttons sit centred under it, Yes first, each as wide as the widest label needs. */
+    @Test
+    void anOptionPaneCentresItsButtonsYesFirst() {
+        FlatLagoonLaf.setup();
+        javax.swing.JOptionPane pane = new javax.swing.JOptionPane("Save the changes?",
+                javax.swing.JOptionPane.QUESTION_MESSAGE, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION);
+        pane.setSize(pane.getPreferredSize());
+        layOut(pane);
+        java.util.List<JButton> buttons = new java.util.ArrayList<>();
+        collectButtons(pane, buttons);
+        buttons.sort(java.util.Comparator.comparingInt(b -> javax.swing.SwingUtilities.convertPoint(b, 0, 0, pane).x));
+        assertEquals(java.util.Arrays.asList(UIManager.getString("OptionPane.yesButtonText"),
+                UIManager.getString("OptionPane.noButtonText"), UIManager.getString("OptionPane.cancelButtonText")),
+                java.util.Arrays.asList(buttons.get(0).getText(), buttons.get(1).getText(), buttons.get(2).getText()));
+        int left = javax.swing.SwingUtilities.convertPoint(buttons.get(0), 0, 0, pane).x;
+        JButton last = buttons.get(2);
+        int right = javax.swing.SwingUtilities.convertPoint(last, last.getWidth(), 0, pane).x;
+        assertEquals(pane.getWidth() - right, left, 1, "centred");
+        assertEquals(new Insets(10, 10, 12, 10), pane.getInsets());
+        JButton cancel = buttons.get(2);
+        int text = cancel.getFontMetrics(cancel.getFont()).stringWidth(cancel.getText());
+        assertTrue(cancel.getWidth() < text + 30, "no minimum width: " + cancel.getWidth() + " for " + text);
+        assertEquals(23, cancel.getHeight(), "the narrow message-button margin");
+    }
+
+    private static void layOut(java.awt.Container c) {
+        c.doLayout();
+        for (java.awt.Component child : c.getComponents()) {
+            if (child instanceof java.awt.Container) {
+                layOut((java.awt.Container) child);
+            }
+        }
+    }
+
+    private static void collectButtons(java.awt.Container c, java.util.List<JButton> into) {
+        for (java.awt.Component child : c.getComponents()) {
+            if (child instanceof JButton) {
+                into.add((JButton) child);
+            } else if (child instanceof java.awt.Container) {
+                collectButtons((java.awt.Container) child, into);
+            }
+        }
+    }
+
+    /** Columns from the frame's left line to the first column of text ink. */
+    private static int textInkFromFrame(javax.swing.JComponent c) {
+        JPanel holder = new JPanel(null);
+        holder.add(c);
+        c.setSize(160, c.getPreferredSize().height);
+        c.doLayout();
+        BufferedImage image = new BufferedImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        c.paint(g);
+        g.dispose();
+        int middle = c.getHeight() / 2, frame = -1;
+        for (int x = 0; x < 20 && frame < 0; x++) {
+            if (luminance(image.getRGB(x, middle)) < 150) {
+                frame = x;
+            }
+        }
+        for (int x = frame + 1; x < 60; x++) {
+            for (int y = 3; y < c.getHeight() - 3; y++) {
+                if (luminance(image.getRGB(x, y)) < 110) {
+                    return x - frame;
+                }
+            }
+        }
+        throw new AssertionError("no text in " + c);
+    }
+
+    private static int luminance(int rgb) {
+        return (((rgb >> 16) & 0xFF) + ((rgb >> 8) & 0xFF) + (rgb & 0xFF)) / 3;
+    }
+
     @Test
     void keepsOneSelectionColourWithAndWithoutFocus() {
         FlatLagoonLaf.setup();
