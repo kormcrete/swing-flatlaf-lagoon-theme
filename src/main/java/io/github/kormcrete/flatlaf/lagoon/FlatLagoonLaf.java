@@ -105,6 +105,8 @@ public class FlatLagoonLaf extends FlatLightLaf {
         defaults.put("ToolBarSeparatorUI", LagoonToolBarSeparatorUI.class.getName());
         // Raised arrow buttons, a framed thumb and a line towards the content.
         defaults.put("ScrollBarUI", LagoonScrollBarUI.class.getName());
+        // Boolean cells in the theme's check box; FlatLaf's table renderer has its own.
+        defaults.put("TableUI", LagoonTableUI.class.getName());
         // The corner above a table's vertical scroll bar, beside its header: plain ground. A new one per
         // table, which a lazy value would not give.
         defaults.put("Table.scrollPaneCornerComponent", (UIDefaults.ActiveValue) table -> new TableCorner());

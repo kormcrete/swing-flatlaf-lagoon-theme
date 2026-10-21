@@ -128,6 +128,55 @@ class FlatLagoonLafTest {
     }
 
     @Test
+    void checkBoxesAndRadioButtonsHaveTwelvePixelIconsWhoseFrameFillsThem() {
+        FlatLagoonLaf.setup();
+        javax.swing.Icon check = UIManager.getIcon("CheckBox.icon");
+        javax.swing.Icon radio = UIManager.getIcon("RadioButton.icon");
+        assertEquals(new Dimension(12, 12), new Dimension(check.getIconWidth(), check.getIconHeight()));
+        assertEquals(new Dimension(12, 12), new Dimension(radio.getIconWidth(), radio.getIconHeight()));
+        JCheckBox box = new JCheckBox("Print", true);
+        BufferedImage image = new BufferedImage(12, 12, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        check.paintIcon(box, g, 0, 0);
+        g.dispose();
+        int frame = UIManager.getColor("CheckBox.icon.selectedBorderColor").getRGB();
+        assertEquals(frame, image.getRGB(0, 6));
+        assertEquals(frame, image.getRGB(11, 6));
+        assertEquals(frame, image.getRGB(6, 0));
+        assertEquals(frame, image.getRGB(6, 11));
+    }
+
+    @Test
+    void aTablesBooleanCellsShowTheThemesCheckBoxAndGiveTheRendererBackOnASwitch() throws Exception {
+        FlatLagoonLaf.setup();
+        JTable table = new JTable(new Object[][] {{true}, {false}}, new Object[] {"Done"}) {
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return Boolean.class;
+            }
+        };
+        javax.swing.table.TableCellRenderer renderer = table.getDefaultRenderer(Boolean.class);
+        JLabel on = (JLabel) renderer.getTableCellRendererComponent(table, true, false, false, 0, 0);
+        assertEquals(12, on.getIcon().getIconWidth());
+        int[] checked = paint(on.getIcon(), on);
+        JLabel off = (JLabel) renderer.getTableCellRendererComponent(table, false, false, false, 1, 0);
+        assertTrue(!java.util.Arrays.equals(checked, paint(off.getIcon(), off)), "a true and a false cell look alike");
+
+        UIManager.setLookAndFeel(new MetalLookAndFeel());
+        SwingUtilities.updateComponentTreeUI(table);
+        assertTrue(table.getDefaultRenderer(Boolean.class) instanceof JCheckBox,
+                "the table kept " + table.getDefaultRenderer(Boolean.class));
+    }
+
+    private static int[] paint(javax.swing.Icon icon, java.awt.Component c) {
+        BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        icon.paintIcon(c, g, 0, 0);
+        g.dispose();
+        return image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+    }
+
+    @Test
     void buttonsKeepTheGapAfterTheTextAndAnOddSize() {
         FlatLagoonLaf.setup();
         JButton save = new JButton("Speichern");
