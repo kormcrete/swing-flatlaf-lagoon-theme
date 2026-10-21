@@ -216,17 +216,29 @@ class FlatLagoonLafTest {
         assertEquals(save.getPreferredSize(), new JButton("<html>Speichern</html>").getPreferredSize());
     }
 
-    /** Field, combo, spinner and button heights the layout of a form is built on. */
+    /**
+     * Field, combo, spinner and button heights the layout of a form is built on: the text's height plus the
+     * theme's room around it (21, 23, 24 and 25px with a 15px line, as Dialog 12 has on macOS and Linux).
+     */
     @Test
     void sizesControlsForADenseForm() {
         dense();
-        assertEquals(21, new JTextField(10).getPreferredSize().height);
-        assertEquals(21, new JPasswordField(10).getPreferredSize().height);
-        assertEquals(23, new JComboBox<>(new String[]{"x"}).getPreferredSize().height);
-        assertEquals(24, new JSpinner().getPreferredSize().height);
-        assertEquals(47, new JSpinner(new javax.swing.SpinnerNumberModel(12, 0, 99, 1)).getPreferredSize().width);
-        assertEquals(25, new JButton("Save").getPreferredSize().height);
-        assertEquals(23, new JCheckBox("x").getPreferredSize().height);
+        int text = textHeight(new JTextField());
+        assertEquals(text + 6, new JTextField(10).getPreferredSize().height);
+        assertEquals(text + 6, new JPasswordField(10).getPreferredSize().height);
+        assertEquals(text + 8, new JComboBox<>(new String[]{"x"}).getPreferredSize().height);
+        assertEquals(text + 9, new JSpinner().getPreferredSize().height);
+        // two columns for 99 (a column is an m wide), then frame, padding and the buttons: 47px for Dialog 12
+        JSpinner twoDigits = new JSpinner(new javax.swing.SpinnerNumberModel(12, 0, 99, 1));
+        assertEquals(2 * twoDigits.getFontMetrics(twoDigits.getFont()).charWidth('m') + 25,
+                twoDigits.getPreferredSize().width);
+        assertEquals((text + 10) | 1, new JButton("Save").getPreferredSize().height);
+        assertEquals(text + 8, new JCheckBox("x").getPreferredSize().height);
+    }
+
+    /** The height of a line of the component's text. */
+    private static int textHeight(javax.swing.JComponent c) {
+        return c.getFontMetrics(c.getFont()).getHeight();
     }
 
     /**
@@ -242,8 +254,10 @@ class FlatLagoonLafTest {
         assertEquals(field, textInkFromFrame(editable), "editable combo box");
         JComboBox<String> list = new JComboBox<>(new String[]{"Hello"});
         assertEquals(field + 1, textInkFromFrame(list), "list value");
-        // frame, padding, the renderer's border and the arrow button: the width a form was laid out for
-        assertEquals(list.getFontMetrics(list.getFont()).stringWidth("Hello") + 29, list.getPreferredSize().width);
+        // frame, padding, the renderer's border and the arrow button, as wide as the text is high: the width a
+        // form was laid out for
+        assertEquals(list.getFontMetrics(list.getFont()).stringWidth("Hello") + textHeight(list) + 14,
+                list.getPreferredSize().width);
     }
 
     /** A tree row is as tall as its icon or text, flush at the tree's edge, 20px further in per level. */
@@ -338,7 +352,7 @@ class FlatLagoonLafTest {
     }
 
     /**
-     * Dense menus: 19px items, 21px with an icon or a check mark, 3px separators. Text starts one column in
+     * Dense menus: 19px items, 21px with an icon or a check mark (with a 15px line), 3px separators. Text starts one column in
      * every item of a popup: near the edge when no item has an icon, after the icon column when one does.
      */
     @Test
@@ -361,7 +375,11 @@ class FlatLagoonLafTest {
         plain.addSeparator();
         plain.add(new javax.swing.JRadioButtonMenuItem("Kxyz", true));
         int[][] p = menuItemInk(plain);
-        assertEquals(java.util.Arrays.asList(21, 19, 21, 3, 21), heights(plain));
+        // as tall as the text, or as a check mark or an icon where that is taller
+        int text = textHeight(sub);
+        int check = Math.max(text, UIManager.getIcon("CheckBoxMenuItem.checkIcon").getIconHeight());
+        int radio = Math.max(text, UIManager.getIcon("RadioButtonMenuItem.checkIcon").getIconHeight());
+        assertEquals(java.util.Arrays.asList(text + 6, text + 4, check + 6, 3, radio + 6), heights(plain));
         assertEquals(24, p[0][0], "submenu text");
         assertEquals(24, p[1][0], "item text");
         assertEquals(24, p[2][p[2].length - 1], "check box item text");
@@ -372,7 +390,7 @@ class FlatLagoonLafTest {
         withIcons.add(new javax.swing.JMenuItem("Kxyz", icon));
         withIcons.add(new javax.swing.JMenuItem("Kxyz"));
         int[][] w = menuItemInk(withIcons);
-        assertEquals(java.util.Arrays.asList(21, 19), heights(withIcons));
+        assertEquals(java.util.Arrays.asList(Math.max(text, 16) + 5, text + 4), heights(withIcons));
         assertEquals(23, w[0][0], "icon");
         assertEquals(44, w[0][1], "text after the icon");
         assertEquals(44, w[1][0], "text of an item without one");
@@ -452,7 +470,7 @@ class FlatLagoonLafTest {
         JButton cancel = buttons.get(2);
         int text = cancel.getFontMetrics(cancel.getFont()).stringWidth(cancel.getText());
         assertTrue(cancel.getWidth() < text + 30, "no minimum width: " + cancel.getWidth() + " for " + text);
-        assertEquals(23, cancel.getHeight(), "the narrow message-button margin");
+        assertEquals((textHeight(cancel) + 8) | 1, cancel.getHeight(), "the narrow message-button margin");
     }
 
     private static void layOut(java.awt.Container c) {
