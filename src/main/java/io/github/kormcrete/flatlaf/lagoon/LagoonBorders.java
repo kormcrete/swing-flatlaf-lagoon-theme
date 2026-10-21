@@ -9,12 +9,16 @@ import com.formdev.flatlaf.ui.FlatTextBorder;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
+import javax.swing.JViewport;
 import javax.swing.UIManager;
+import javax.swing.text.JTextComponent;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
+import java.awt.Paint;
 
 import static com.formdev.flatlaf.util.UIScale.scale;
 
@@ -76,7 +80,11 @@ public final class LagoonBorders {
         }
     }
 
-    /** Scroll panes. */
+    /**
+     * Scroll panes. One around a text component is that input's edge and framed like a field. One around
+     * a table, list, tree or panel shows content: a plain line ({@code ScrollPane.borderColor}, a tab's
+     * content frame by default) without a ring, in the space the ring takes elsewhere.
+     */
     public static class ScrollPane extends FlatScrollPaneBorder {
         @Override
         protected Color getFocusColor(Component c) {
@@ -84,9 +92,22 @@ public final class LagoonBorders {
         }
 
         @Override
+        protected Paint getBorderColor(Component c) {
+            Color line = UIManager.getColor("ScrollPane.borderColor");
+            return line == null || framesText(c) ? super.getBorderColor(c) : line;
+        }
+
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            paintRing(c, g, x, y, width, height, getFocusWidth(c));
+            if (framesText(c)) {
+                paintRing(c, g, x, y, width, height, getFocusWidth(c));
+            }
             super.paintBorder(c, g, x, y, width, height);
+        }
+
+        private static boolean framesText(Component c) {
+            JViewport viewport = c instanceof JScrollPane ? ((JScrollPane) c).getViewport() : null;
+            return viewport != null && viewport.getView() instanceof JTextComponent;
         }
     }
 

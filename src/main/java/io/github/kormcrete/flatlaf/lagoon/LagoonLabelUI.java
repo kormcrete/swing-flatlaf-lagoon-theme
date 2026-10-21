@@ -40,7 +40,7 @@ public class LagoonLabelUI extends FlatLabelUI {
             return size;
         }
         JLabel l = (JLabel) c;
-        return CompoundSize.adjust(l, size, l.getText(), l.getIcon(), l.getIconTextGap(),
+        return CompoundSize.adjust(size, l.getText(), l.getIcon(), l.getIconTextGap(),
                 l.getHorizontalTextPosition(), l.getVerticalTextPosition());
     }
 }

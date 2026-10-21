@@ -66,7 +66,7 @@ public class LagoonButtonUI extends FlatButtonUI {
 
     static Dimension adjust(JComponent c, Dimension size) {
         AbstractButton b = (AbstractButton) c;
-        return CompoundSize.odd(CompoundSize.adjust(b, size, b.getText(), b.getIcon(), b.getIconTextGap(),
+        return CompoundSize.odd(CompoundSize.adjust(size, b.getText(), b.getIcon(), b.getIconTextGap(),
                 b.getHorizontalTextPosition(), b.getVerticalTextPosition()));
     }
 

@@ -1,9 +1,7 @@
 package io.github.kormcrete.flatlaf.lagoon;
 
 import javax.swing.Icon;
-import javax.swing.JComponent;
 import javax.swing.SwingConstants;
-import javax.swing.plaf.basic.BasicHTML;
 import java.awt.Dimension;
 
 /**
@@ -17,16 +15,17 @@ import java.awt.Dimension;
  *   <li>Buttons are given an odd width and height, so their text and icon centre on a whole pixel.</li>
  * </ul>
  *
- * HTML text is sized as FlatLaf sizes it.
+ * HTML text is given the same room as plain text, so a label does not shift when its text turns into
+ * a link.
  */
 final class CompoundSize {
 
     private CompoundSize() {
     }
 
-    static Dimension adjust(JComponent c, Dimension size, String text, Icon icon, int gap,
+    static Dimension adjust(Dimension size, String text, Icon icon, int gap,
                             int horizontalTextPosition, int verticalTextPosition) {
-        if (size == null || c.getClientProperty(BasicHTML.propertyKey) != null) {
+        if (size == null) {
             return size;
         }
         boolean hasText = text != null && !text.isEmpty();

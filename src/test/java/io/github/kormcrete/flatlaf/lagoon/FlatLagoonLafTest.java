@@ -112,7 +112,8 @@ class FlatLagoonLafTest {
         JLabel label = new JLabel("Username");
         int text = label.getFontMetrics(label.getFont()).stringWidth("Username");
         assertEquals(text + label.getIconTextGap(), label.getPreferredSize().width);
-        assertEquals(text, new JLabel("<html>Username</html>").getPreferredSize().width);
+        // HTML text takes the same room as plain text: a centred label must not shift when it turns into a link.
+        assertEquals(text + label.getIconTextGap(), new JLabel("<html>Username</html>").getPreferredSize().width);
         // Swing derives the minimum from the preferred size; the gap must not be added twice.
         assertEquals(label.getPreferredSize().width, label.getMinimumSize().width);
         // A list renderer is a label too, but its size is a list item's or a combo box value's.
@@ -134,6 +135,7 @@ class FlatLagoonLafTest {
         java.awt.Insets in = save.getInsets();
         assertEquals((text + save.getIconTextGap() + in.left + in.right) | 1, save.getPreferredSize().width);
         assertEquals(1, save.getPreferredSize().height % 2);
+        assertEquals(save.getPreferredSize(), new JButton("<html>Speichern</html>").getPreferredSize());
     }
 
     /** Field, combo, spinner and button heights the layout of a form is built on. */
@@ -186,6 +188,44 @@ class FlatLagoonLafTest {
         FlatLightLaf.setup();
         SwingUtilities.updateComponentTreeUI(bar);
         assertEquals(0, bar.getComponent(0).getPreferredSize().height);
+    }
+
+    @Test
+    void contentIsFramedInATabsLineAndTextInTheFieldsFrame() {
+        FlatLagoonLaf.setup();
+        int tab = UIManager.getColor("TabbedPane.contentAreaColor").getRGB();
+        int field = UIManager.getColor("Component.borderColor").getRGB();
+        int[] table = frameLeftEdge(new JScrollPane(new JTable(3, 3)));
+        assertEquals(0, table[0] >>> 24, "no ring around content");
+        assertEquals(tab, table[1]);
+        assertEquals(field, frameLeftEdge(new JScrollPane(new javax.swing.JTextArea(3, 10)))[1]);
+    }
+
+    @Test
+    void aTableFillingATabKeepsItsOwnFrame() {
+        FlatLagoonLaf.setup();
+        JScrollPane scrollPane = new JScrollPane(new JTable(3, 3));
+        javax.swing.JTabbedPane tabs = new javax.swing.JTabbedPane();
+        tabs.addTab("One", scrollPane);
+        tabs.setSize(300, 200);
+        tabs.doLayout();
+        assertEquals(UIManager.getColor("TabbedPane.contentAreaColor").getRGB(), frameLeftEdge(scrollPane)[1]);
+    }
+
+    /** The first pixels of the middle row of a scroll pane's border, painted on its own. */
+    private static int[] frameLeftEdge(JScrollPane scrollPane) {
+        if (scrollPane.getWidth() == 0) {
+            scrollPane.setSize(200, 100);
+        }
+        BufferedImage image = new BufferedImage(scrollPane.getWidth(), scrollPane.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        scrollPane.getBorder().paintBorder(scrollPane, g, 0, 0, image.getWidth(), image.getHeight());
+        g.dispose();
+        int[] edge = new int[3];
+        for (int x = 0; x < edge.length; x++) {
+            edge[x] = image.getRGB(x, image.getHeight() / 2);
+        }
+        return edge;
     }
 
     @Test
