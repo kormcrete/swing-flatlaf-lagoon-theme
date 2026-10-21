@@ -24,7 +24,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.image.BufferedImage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -184,6 +186,53 @@ class FlatLagoonLafTest {
         FlatLightLaf.setup();
         SwingUtilities.updateComponentTreeUI(bar);
         assertEquals(0, bar.getComponent(0).getPreferredSize().height);
+    }
+
+    @Test
+    void aTablesScrollPaneKeepsTheThemesFrameSoFocusPaintsNoRing() {
+        FlatLagoonLaf.setup();
+        JTable table = new JTable(3, 3) {
+            {
+                // What JTable does on addNotify, which a headless test never reaches.
+                new JScrollPane(this);
+                configureEnclosingScrollPane();
+            }
+        };
+        assertEquals(LagoonBorders.ScrollPane.class, ((JScrollPane) table.getParent().getParent()).getBorder().getClass());
+    }
+
+    @Test
+    void aLongThumbCarriesThreeRidgesAcrossItsMiddleAndAShortOneNone() {
+        FlatLagoonLaf.setup();
+        int shadow = UIManager.getColor("ScrollBar.gripShadowColor").getRGB();
+        // A thumb of 30 px along a 15 px track breadth: its centre column crosses every ridge once.
+        assertEquals(3, runsOf(shadow, thumbCentreColumn(new JScrollBar(JScrollBar.VERTICAL, 0, 40, 0, 100))));
+        // Too short to hold them with room to spare.
+        assertEquals(0, runsOf(shadow, thumbCentreColumn(new JScrollBar(JScrollBar.VERTICAL, 0, 1, 0, 100))));
+    }
+
+    private static int[] thumbCentreColumn(JScrollBar bar) {
+        bar.setSize(16, 100);
+        bar.doLayout();
+        BufferedImage image = new BufferedImage(bar.getWidth(), bar.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        bar.paint(g);
+        g.dispose();
+        int[] column = new int[image.getHeight()];
+        for (int y = 0; y < column.length; y++) {
+            column[y] = image.getRGB(1 + 15 / 2, y);
+        }
+        return column;
+    }
+
+    private static int runsOf(int rgb, int[] pixels) {
+        int runs = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            if (pixels[i] == rgb && (i == 0 || pixels[i - 1] != rgb)) {
+                runs++;
+            }
+        }
+        return runs;
     }
 
     @Test

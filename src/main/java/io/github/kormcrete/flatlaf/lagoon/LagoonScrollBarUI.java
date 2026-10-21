@@ -27,7 +27,8 @@ import java.awt.Rectangle;
  * left), above a horizontal one. {@code ScrollBar.width} includes that line.
  *
  * <p>Colours: {@code ScrollBar.lineColor} for the line, {@code ScrollBar.thumbBorderColor} for the
- * thumb's frame.
+ * thumb's frame, {@code ScrollBar.gripHighlightColor} and {@code ScrollBar.gripShadowColor} for the
+ * ridges of its grip.
  */
 public class LagoonScrollBarUI extends FlatScrollBarUI {
 
@@ -77,6 +78,46 @@ public class LagoonScrollBarUI extends FlatScrollBarUI {
         Rectangle r = FlatUIUtils.subtractInsets(thumbBounds, UIScale.scale(insets));
         g.setColor(frame);
         FlatUIUtils.paintOutline((Graphics2D) g, r.x, r.y, r.width, r.height, UIScale.scale(1f), 0);
+        paintGrip(g, r);
+    }
+
+    /**
+     * Three raised ridges across the middle of the thumb, each a light line over a dark one, when the
+     * thumb is long enough to hold them with room to spare.
+     */
+    private void paintGrip(Graphics g, Rectangle thumb) {
+        Color light = UIManager.getColor("ScrollBar.gripHighlightColor");
+        Color dark = UIManager.getColor("ScrollBar.gripShadowColor");
+        if (light == null || dark == null) {
+            return;
+        }
+        boolean vertical = scrollbar.getOrientation() == JScrollBar.VERTICAL;
+        int length = vertical ? thumb.height : thumb.width;
+        int breadth = vertical ? thumb.width : thumb.height;
+        int line = UIScale.scale(1);
+        int pitch = 3 * line;
+        int span = 3 * pitch - line;
+        int margin = UIScale.scale(4);
+        int across = breadth - 2 * margin;
+        if (length < span + 2 * margin || across <= 0) {
+            return;
+        }
+        int along = (length - span) / 2;
+        for (int i = 0; i < 3; i++) {
+            g.setColor(light);
+            fillAcross(g, thumb, vertical, along + i * pitch, margin, across, line);
+            g.setColor(dark);
+            fillAcross(g, thumb, vertical, along + i * pitch + line, margin, across, line);
+        }
+    }
+
+    private static void fillAcross(Graphics g, Rectangle thumb, boolean vertical, int along, int from, int across,
+                                   int line) {
+        if (vertical) {
+            g.fillRect(thumb.x + from, thumb.y + along, across, line);
+        } else {
+            g.fillRect(thumb.x + along, thumb.y + from, line, across);
+        }
     }
 
     /** The arrow buttons, square to the bar's breadth inside the line. */
