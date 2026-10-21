@@ -35,8 +35,9 @@ import static com.formdev.flatlaf.util.UIScale.scale;
  * highlight line below and to the right, in every enabled state; a disabled component has no ring.
  *
  * <p>The ring takes the space FlatLaf reserves as {@code Component.focusWidth} for its focus ring,
- * which these borders never paint: focus does not change the frame. Colours:
- * {@code Component.ringShadowColor} and {@code Component.ringHighlightColor}. The properties file names
+ * which these borders never paint. Focus shows on the frame of a field, combo box or spinner instead: it
+ * takes {@code Component.focusedBorderColor} and thickens inwards by {@code Component.innerFocusWidth}.
+ * Colours: {@code Component.ringShadowColor} and {@code Component.ringHighlightColor}. The properties file names
  * these classes as the {@code *.border} of fields, combo boxes, spinners, buttons and scroll panes;
  * {@link MenuBar} is the menu bar's and {@link MenuItem} a popup menu item's, which have no ring.
  */
@@ -77,6 +78,11 @@ public final class LagoonBorders {
         }
 
         @Override
+        protected float getBorderWidth(Component c) {
+            return super.getBorderWidth(c) + (isFocused(c) ? innerFocusWidth : 0);
+        }
+
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             paintRing(c, g, x, y, width, height, getFocusWidth(c));
             super.paintBorder(c, g, x, y, width, height);
@@ -88,6 +94,11 @@ public final class LagoonBorders {
         @Override
         protected Color getFocusColor(Component c) {
             return null;
+        }
+
+        @Override
+        protected float getBorderWidth(Component c) {
+            return super.getBorderWidth(c) + (isFocused(c) ? innerFocusWidth : 0);
         }
 
         @Override
@@ -112,6 +123,11 @@ public final class LagoonBorders {
         protected Paint getBorderColor(Component c) {
             Color line = UIManager.getColor("ScrollPane.borderColor");
             return line == null || framesText(c) ? super.getBorderColor(c) : line;
+        }
+
+        @Override
+        protected float getBorderWidth(Component c) {
+            return super.getBorderWidth(c) + (framesText(c) && isFocused(c) ? innerFocusWidth : 0);
         }
 
         @Override

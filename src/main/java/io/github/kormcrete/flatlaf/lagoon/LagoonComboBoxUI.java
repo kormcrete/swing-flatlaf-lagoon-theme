@@ -17,10 +17,11 @@ import java.awt.Rectangle;
 import static com.formdev.flatlaf.util.UIScale.scale;
 
 /**
- * Combo boxes whose arrow is a small raised button ({@link LagoonArrowButton}) set inside the frame with
- * a one-pixel gap, instead of a band separated by a line. The box keeps FlatLaf's size: the button and
- * its gaps take the width FlatLaf gives its square button. Pair with {@code ComboBox.buttonStyle = none},
- * so FlatLaf paints no button background of its own.
+ * Combo boxes with FlatLaf's arrow, or, with {@code Lagoon.raisedArrowButtons}, a small raised button
+ * ({@link LagoonArrowButton}) set inside the frame with a one-pixel gap, instead of a band separated by a
+ * line. The box keeps FlatLaf's size: the button and its gaps take the width FlatLaf gives its square
+ * button. Pair the switch with {@code ComboBox.buttonStyle = none}, so FlatLaf paints no button background
+ * of its own. {@code ComboBox.editorMargins}, when set, pads an editable box's text field.
  */
 public class LagoonComboBoxUI extends FlatComboBoxUI {
 
@@ -30,7 +31,12 @@ public class LagoonComboBoxUI extends FlatComboBoxUI {
 
     @Override
     protected JButton createArrowButton() {
-        return new LagoonArrowButton(SwingConstants.SOUTH, 7, 4);
+        return UIManager.getBoolean("Lagoon.raisedArrowButtons")
+                ? new LagoonArrowButton(SwingConstants.SOUTH, 7, 4) : super.createArrowButton();
+    }
+
+    private boolean raised() {
+        return arrowButton instanceof LagoonArrowButton && arrowButton.isVisible();
     }
 
     /**
@@ -56,7 +62,7 @@ public class LagoonComboBoxUI extends FlatComboBoxUI {
             @Override
             public void layoutContainer(Container parent) {
                 super.layoutContainer(parent);
-                if (arrowButton == null || !arrowButton.isVisible()) {
+                if (!raised()) {
                     return;
                 }
                 Insets insets = comboBox.getInsets();
@@ -77,7 +83,7 @@ public class LagoonComboBoxUI extends FlatComboBoxUI {
     @Override
     protected Rectangle rectangleForCurrentValue() {
         Rectangle r = super.rectangleForCurrentValue();
-        if (arrowButton != null && arrowButton.isVisible() && comboBox.getComponentOrientation().isLeftToRight()) {
+        if (raised() && comboBox.getComponentOrientation().isLeftToRight()) {
             // up to the gap before the button, not to where FlatLaf's button band began
             int end = arrowButton.getX() - scale(1);
             if (end > r.x) {

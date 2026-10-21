@@ -18,10 +18,16 @@ import java.util.Properties;
 
 /**
  * A classic light theme for FlatLaf: neutral grey, square corners, one-pixel dark frames, framed
- * card tabs, white tables with a grid and blue scroll bars with buttons. Colours and sizes live in
- * {@code FlatLagoonLaf.properties}.
+ * card tabs, white tables with a grid and blue scroll bars with buttons. Layout and sizes are FlatLaf
+ * Light's; colours and sizes live in {@code FlatLagoonLaf.properties}.
  *
- * <p>Install with {@link #setup()}, before the first Swing component is created.
+ * <p>Switches an application can turn on in its own {@code FlatLagoonLaf.properties}
+ * ({@link FlatLaf#registerCustomDefaultsSource(String)}), for a denser, more classic look:
+ * {@code Lagoon.dialogFont} (fonts based on Dialog 12), {@code Lagoon.labelGap} and
+ * {@code Lagoon.oddButtonSize} ({@link CompoundSize}), {@code Lagoon.raisedArrowButtons}
+ * ({@link LagoonComboBoxUI}, {@link LagoonSpinnerUI}).
+ *
+ * <p>Install with {@link #setup()}, or {@code FlatLaf.setup(new FlatLagoonLaf())}.
  */
 public class FlatLagoonLaf extends FlatLightLaf {
 
@@ -30,27 +36,12 @@ public class FlatLagoonLaf extends FlatLightLaf {
     public static final String NAME = "Lagoon";
 
     /**
-     * Installs the theme, as {@link FlatLaf#setup(javax.swing.LookAndFeel)} does; the base font is chosen in
-     * {@link #initialize()}.
+     * Installs the theme, as {@link FlatLaf#setup(javax.swing.LookAndFeel)} does.
      *
      * @return whether the look-and-feel was installed, as {@link FlatLaf#setup(javax.swing.LookAndFeel)}
      */
     public static boolean setup() {
         return FlatLaf.setup(new FlatLagoonLaf());
-    }
-
-    /**
-     * Bases the fonts on Dialog 12, unless the application has put its own {@code defaultFont} into
-     * {@link UIManager}. The font goes into {@code UIManager}, not the properties file, so that FlatLaf
-     * still DPI-scales it. Decided here rather than in {@link #setup()}: by now the previous
-     * look-and-feel is uninitialized, so a font it put there and took back again is gone.
-     */
-    @Override
-    public void initialize() {
-        if (!applicationSetDefaultFont()) {
-            UIManager.put("defaultFont", BASE_FONT);
-        }
-        super.initialize();
     }
 
     /** Takes the base font back out, so the next look-and-feel does not mistake it for the application's. */
@@ -89,9 +80,22 @@ public class FlatLagoonLaf extends FlatLightLaf {
         return properties;
     }
 
+    /**
+     * With {@code Lagoon.dialogFont}, bases the fonts on Dialog 12, unless the application has put its own
+     * {@code defaultFont} into {@link UIManager}. The font goes into {@code UIManager}, not the properties
+     * file, so that FlatLaf still scales it. Decided here, after the previous look-and-feel is uninitialized,
+     * so a font it put there and took back again is gone.
+     */
+    private static void chooseBaseFont(UIDefaults defaults) {
+        if (Boolean.TRUE.equals(defaults.get("Lagoon.dialogFont")) && !applicationSetDefaultFont()) {
+            UIManager.put("defaultFont", BASE_FONT);
+        }
+    }
+
     @Override
     public UIDefaults getDefaults() {
         UIDefaults defaults = super.getDefaults();
+        chooseBaseFont(defaults);
         // Frames the unselected tabs too, which no key can express.
         defaults.put("TabbedPaneUI", LagoonTabbedPaneUI.class.getName());
         // Label and button sizes keep the icon-text gap after the text (CompoundSize).

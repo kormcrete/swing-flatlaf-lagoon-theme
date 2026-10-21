@@ -1,5 +1,6 @@
 package io.github.kormcrete.flatlaf.lagoon;
 
+import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +35,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** Headless: installing the look-and-feel needs no display. */
 class FlatLagoonLafTest {
 
+    /** An application's custom defaults that turn every switch on and keep the dense sizes (test resources). */
+    private static final String DENSE = "io.github.kormcrete.flatlaf.lagoon.dense";
+
+    /** Installs the theme with {@link #DENSE} registered, as a dense application would. */
+    private static void dense() {
+        FlatLaf.registerCustomDefaultsSource(DENSE);
+        FlatLagoonLaf.setup();
+    }
+
     @AfterEach
     void resetLookAndFeel() throws Exception {
+        FlatLaf.unregisterCustomDefaultsSource(DENSE);
         UIManager.put("defaultFont", null);
         UIManager.setLookAndFeel(new MetalLookAndFeel());
     }
@@ -51,12 +62,11 @@ class FlatLagoonLafTest {
     void loadsItsPropertiesFile() {
         FlatLagoonLaf.setup();
         // A handful of keys that only the properties file sets; FlatLightLaf's own values differ.
-        assertEquals(new Color(0xF5F6F7), UIManager.getColor("Panel.background"));
         assertEquals(new Color(0x5F6265), UIManager.getColor("Component.borderColor"));
         assertEquals(2, UIManager.getInt("Component.arc"));
         assertEquals("card", UIManager.getString("TabbedPane.tabType"));
         assertEquals(16, UIManager.getInt("ScrollBar.width"));
-        assertEquals(new Insets(1, 1, 1, 1), UIManager.getInsets("Table.cellMargins"));
+        assertEquals(new Color(0xBCBDBE), UIManager.getColor("Table.gridColor"));
     }
 
     @Test
@@ -80,8 +90,8 @@ class FlatLagoonLafTest {
     }
 
     @Test
-    void basesFontsOnDialog12WithBoldMenus() {
-        FlatLagoonLaf.setup();
+    void withTheDialogFontSwitchBasesFontsOnDialog12WithBoldMenus() {
+        dense();
         Font label = UIManager.getFont("Label.font");
         assertEquals("Dialog", label.getName());
         assertEquals(Font.PLAIN, label.getStyle());
@@ -91,7 +101,7 @@ class FlatLagoonLafTest {
     @Test
     void leavesAnApplicationsOwnBaseFontAlone() {
         UIManager.put("defaultFont", new Font(Font.SANS_SERIF, Font.PLAIN, 14));
-        FlatLagoonLaf.setup();
+        dense();
         Font label = UIManager.getFont("Label.font");
         assertEquals(Font.SANS_SERIF, label.getName());
     }
@@ -103,13 +113,13 @@ class FlatLagoonLafTest {
     @Test
     void switchingFromAnotherFlatLafThemeStillBasesFontsOnDialog12() {
         FlatLightLaf.setup();
-        FlatLagoonLaf.setup();
+        dense();
         assertEquals("Dialog", UIManager.getFont("Label.font").getName());
     }
 
     @Test
     void labelsKeepTheirIconTextGapAfterTheText() {
-        FlatLagoonLaf.setup();
+        dense();
         JLabel label = new JLabel("Username");
         int text = label.getFontMetrics(label.getFont()).stringWidth("Username");
         assertEquals(text + label.getIconTextGap(), label.getPreferredSize().width);
@@ -197,7 +207,7 @@ class FlatLagoonLafTest {
 
     @Test
     void buttonsKeepTheGapAfterTheTextAndAnOddSize() {
-        FlatLagoonLaf.setup();
+        dense();
         JButton save = new JButton("Speichern");
         int text = save.getFontMetrics(save.getFont()).stringWidth("Speichern");
         java.awt.Insets in = save.getInsets();
@@ -209,7 +219,7 @@ class FlatLagoonLafTest {
     /** Field, combo, spinner and button heights the layout of a form is built on. */
     @Test
     void sizesControlsForADenseForm() {
-        FlatLagoonLaf.setup();
+        dense();
         assertEquals(21, new JTextField(10).getPreferredSize().height);
         assertEquals(21, new JPasswordField(10).getPreferredSize().height);
         assertEquals(23, new JComboBox<>(new String[]{"x"}).getPreferredSize().height);
@@ -225,7 +235,7 @@ class FlatLagoonLafTest {
      */
     @Test
     void aComboBoxsTextLinesUpWithAFieldsText() {
-        FlatLagoonLaf.setup();
+        dense();
         JComboBox<String> editable = new JComboBox<>(new String[]{"Hello"});
         editable.setEditable(true);
         int field = textInkFromFrame(new JTextField("Hello"));
@@ -239,7 +249,7 @@ class FlatLagoonLafTest {
     /** A tree row is as tall as its icon or text, flush at the tree's edge, 20px further in per level. */
     @Test
     void treeRowsAreAsTallAsTheirContentAndStepTwentyPixelsALevel() {
-        FlatLagoonLaf.setup();
+        dense();
         javax.swing.JTree tree = settingsLikeTree();
         assertEquals(new Insets(0, 0, 0, 0), tree.getInsets());
         assertEquals(java.util.Arrays.asList(20, 40, 20), rowXs(tree));
@@ -257,10 +267,31 @@ class FlatLagoonLafTest {
         assertEquals(text.getFontMetrics(text.getFont()).getHeight(), text.getRowBounds(0).height, "a row of text");
     }
 
+    /**
+     * A tree row of text alone keeps the label gap after its text, as a label does; a row with an icon does not
+     * (Swing's tree renderer adds 3px either way).
+     */
+    @Test
+    void aTextOnlyTreeRowKeepsTheLabelGapAfterItsText() {
+        dense();
+        javax.swing.JTree tree = settingsLikeTree();
+        javax.swing.tree.DefaultTreeCellRenderer renderer = new javax.swing.tree.DefaultTreeCellRenderer();
+        renderer.getTreeCellRendererComponent(tree, "Parent", false, false, true, 0, false);
+        renderer.setIcon(null);
+        int text = renderer.getFontMetrics(renderer.getFont()).stringWidth("Parent");
+        Insets in = renderer.getInsets();
+        assertEquals(text + renderer.getIconTextGap() + 3 + in.left + in.right, renderer.getPreferredSize().width);
+        javax.swing.Icon icon = UIManager.getIcon("Tree.leafIcon") != null ? UIManager.getIcon("Tree.leafIcon")
+                : new javax.swing.ImageIcon(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
+        renderer.setIcon(icon);
+        assertEquals(icon.getIconWidth() + renderer.getIconTextGap() + text + 3 + in.left + in.right,
+                renderer.getPreferredSize().width, "with an icon");
+    }
+
     /** A tree may ask for no lines with the standard {@code JTree.lineStyle} client property. */
     @Test
     void aTreeAskingForNoLinesPaintsNone() {
-        FlatLagoonLaf.setup();
+        dense();
         int hash = UIManager.getColor("Tree.hash").getRGB() & 0xFFFFFF;
         assertTrue(pixelsOf(hash, settingsLikeTree()) > 0, "lines by default");
         javax.swing.JTree plain = settingsLikeTree();
@@ -312,7 +343,7 @@ class FlatLagoonLafTest {
      */
     @Test
     void menusAreDenseAndAlignTheirText() {
-        FlatLagoonLaf.setup();
+        dense();
         javax.swing.Icon icon = new javax.swing.Icon() {
             public void paintIcon(java.awt.Component c, java.awt.Graphics g, int x, int y) {
                 g.setColor(Color.BLACK);
@@ -402,7 +433,7 @@ class FlatLagoonLafTest {
     /** A message's buttons sit centred under it, Yes first, each as wide as the widest label needs. */
     @Test
     void anOptionPaneCentresItsButtonsYesFirst() {
-        FlatLagoonLaf.setup();
+        dense();
         javax.swing.JOptionPane pane = new javax.swing.JOptionPane("Save the changes?",
                 javax.swing.JOptionPane.QUESTION_MESSAGE, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION);
         pane.setSize(pane.getPreferredSize());
@@ -475,7 +506,7 @@ class FlatLagoonLafTest {
 
     @Test
     void keepsOneSelectionColourWithAndWithoutFocus() {
-        FlatLagoonLaf.setup();
+        dense();
         assertEquals(UIManager.getColor("Table.selectionBackground"),
                 UIManager.getColor("Table.selectionInactiveBackground"));
         assertEquals(UIManager.getColor("List.selectionBackground"),
@@ -485,7 +516,7 @@ class FlatLagoonLafTest {
     /** The frame round a tab's content is one line, with room inside it on the three sides away from the tabs. */
     @Test
     void tabContentSitsInsideItsFrameWithRoomToSpare() {
-        FlatLagoonLaf.setup();
+        dense();
         javax.swing.JTabbedPane tabs = new javax.swing.JTabbedPane();
         JPanel content = new JPanel();
         tabs.addTab("Orders", content);
@@ -667,15 +698,257 @@ class FlatLagoonLafTest {
     void switchingFromAThemeThatTakesItsFontBackBasesFontsOnDialog12() throws Exception {
         UIManager.setLookAndFeel(new FontOwningTheme());
         assertEquals(Font.SANS_SERIF, UIManager.getFont("Label.font").getName());
-        FlatLagoonLaf.setup();
+        dense();
         assertEquals("Dialog", UIManager.getFont("Label.font").getName());
     }
 
     @Test
     void switchingAwayTakesTheBaseFontBackOutOfUIManager() {
-        FlatLagoonLaf.setup();
+        dense();
         FlatLightLaf.setup();
         // Nothing left above the new theme's own defaults: UIManager answers with the theme's font.
         assertTrue(UIManager.get("defaultFont") == UIManager.getLookAndFeelDefaults().get("defaultFont"));
+    }
+
+    // ---- defaults: FlatLaf Light's layout and sizes ------------------------------------------------------
+
+    private static final String[] LIGHTS_LAYOUT = {
+            "TextField.margin", "FormattedTextField.margin", "PasswordField.margin", "TextArea.margin",
+            "ComboBox.padding", "Spinner.padding", "Table.rowHeight", "Table.cellMargins", "List.cellMargins",
+            "Tree.rowHeight", "Tree.paintLines", "Tree.showDefaultIcons", "Tree.border", "Tree.rendererMargins",
+            "Tree.leftChildIndent", "Tree.rightChildIndent", "Component.arrowType", "TabbedPane.hasFullBorder",
+            "OptionPane.border", "OptionPane.buttonAreaBorder", "OptionPane.iconMessageGap",
+            "OptionPane.buttonOrientation", "OptionPane.isYesLast", "OptionPane.buttonMinimumWidth",
+            "OptionPane.setButtonMargin", "OptionPane.maxCharactersPerLine", "OptionPane.sameSizeButtons",
+            "Panel.background", "defaultFont", "Label.font"};
+
+    /** Paddings, row heights, trees, arrows, tab frame, message layout, panel colour and font: Light's. */
+    @Test
+    void layoutSizesFontAndPanelColourAreFlatLafLights() {
+        FlatLightLaf.setup();
+        java.util.Map<String, Object> light = new java.util.LinkedHashMap<>();
+        for (String key : LIGHTS_LAYOUT) {
+            light.put(key, UIManager.get(key));
+        }
+        FlatLagoonLaf.setup();
+        for (String key : LIGHTS_LAYOUT) {
+            Object lagoon = UIManager.get(key);
+            if (lagoon instanceof javax.swing.border.EmptyBorder) {
+                assertEquals(((Border) light.get(key)).getBorderInsets(new JPanel()),
+                        ((Border) lagoon).getBorderInsets(new JPanel()), key);
+            } else {
+                assertEquals(light.get(key), lagoon, key);
+            }
+        }
+        assertEquals(new Color(0xF2F2F2), UIManager.getColor("Panel.background"));
+    }
+
+    /** A dense application keeps the classic values with its own custom defaults. */
+    @Test
+    void anApplicationsCustomDefaultsKeepTheDenseLook() {
+        dense();
+        assertEquals(new Color(0xF5F6F7), UIManager.getColor("Panel.background"));
+        assertEquals(new Insets(1, 1, 1, 1), UIManager.getInsets("TextField.margin"));
+        assertEquals(new Insets(1, 1, 1, 1), UIManager.getInsets("Table.cellMargins"));
+        assertEquals(16, UIManager.getInt("Table.rowHeight"));
+        assertTrue(UIManager.getBoolean("TabbedPane.hasFullBorder"));
+        assertEquals("triangle", UIManager.getString("Component.arrowType"));
+    }
+
+    /** Light's font after a live switch, as an application with a theme menu does it; Dialog 12 with the switch. */
+    @Test
+    void aLiveSwitchFromLightKeepsThePlatformFontAndTheSwitchGivesDialog12() {
+        FlatLightLaf.setup();
+        JLabel label = new JLabel("Orders");
+        Font light = label.getFont();
+        FlatLaf.setup(new FlatLagoonLaf());
+        SwingUtilities.updateComponentTreeUI(label);
+        assertEquals(light, label.getFont());
+
+        FlatLaf.registerCustomDefaultsSource(DENSE);
+        FlatLaf.setup(new FlatLagoonLaf());
+        SwingUtilities.updateComponentTreeUI(label);
+        assertEquals(new Font(Font.DIALOG, Font.PLAIN, 12), new Font(label.getFont().getName(),
+                label.getFont().getStyle(), label.getFont().getSize()));
+    }
+
+    /** Without the switch, a label is as wide as its text, and a text-only tree row as Swing's renderer makes it. */
+    @Test
+    void labelsAndTreeRowsTakeFlatLafsSizeWithoutTheGapSwitch() {
+        FlatLagoonLaf.setup();
+        JLabel label = new JLabel("Username");
+        assertEquals(label.getFontMetrics(label.getFont()).stringWidth("Username"), label.getPreferredSize().width);
+        javax.swing.tree.DefaultTreeCellRenderer renderer = new javax.swing.tree.DefaultTreeCellRenderer();
+        renderer.getTreeCellRendererComponent(settingsLikeTree(), "Parent", false, false, true, 0, false);
+        renderer.setIcon(null);
+        Insets in = renderer.getInsets();
+        assertEquals(renderer.getFontMetrics(renderer.getFont()).stringWidth("Parent") + 3 + in.left + in.right,
+                renderer.getPreferredSize().width);
+    }
+
+    /** Disabled fields are as grey as the panel they sit on. */
+    @Test
+    void aDisabledFieldIsGreyLikeThePanel() {
+        FlatLagoonLaf.setup();
+        assertEquals(UIManager.getColor("Panel.background"), UIManager.getColor("TextField.disabledBackground"));
+        assertEquals(UIManager.getColor("Panel.background"), UIManager.getColor("ComboBox.disabledBackground"));
+    }
+
+    /** A focused table, list or tree shows its selection in the accent with white text; without focus, pale. */
+    @Test
+    void aSelectionIsStrongWithFocusAndPaleWithout() {
+        FlatLagoonLaf.setup();
+        for (String c : new String[]{"Table", "List", "Tree"}) {
+            assertEquals(new Color(0x2A80D9), UIManager.getColor(c + ".selectionBackground"), c);
+            assertEquals(Color.WHITE, UIManager.getColor(c + ".selectionForeground"), c);
+            assertEquals(new Color(0xB2D8FF), UIManager.getColor(c + ".selectionInactiveBackground"), c);
+            assertEquals(Color.BLACK, UIManager.getColor(c + ".selectionInactiveForeground"), c);
+        }
+        // the focused cell's box stands out on the strong selection
+        assertTrue(!UIManager.getColor("Table.cellFocusColor").equals(UIManager.getColor("Table.selectionBackground")));
+        assertEquals(new Color(0xB2D8FF), UIManager.getColor("MenuItem.selectionBackground"), "menus keep the pale one");
+        assertEquals(Color.BLACK, UIManager.getColor("MenuItem.acceleratorSelectionForeground"));
+    }
+
+    /** A focused field, combo box or spinner shows it: its frame turns the focus colour, two pixels thick. */
+    @Test
+    void aFocusedFieldShowsItsFocusInItsFrame() {
+        FlatLagoonLaf.setup();
+        int focus = UIManager.getColor("Component.focusColor").getRGB();
+        int frame = UIManager.getColor("Component.borderColor").getRGB();
+        int[] focused = frameLeftEdge(new JTextField(10) {
+            @Override
+            public boolean hasFocus() {
+                return true;
+            }
+        });
+        assertEquals(UIManager.getColor("Component.ringShadowColor").getRGB(), focused[0], "the ring stays");
+        assertEquals(focus, focused[1]);
+        assertEquals(focus, focused[2]);
+        assertEquals(frame, frameLeftEdge(new JTextField(10))[1]);
+        assertEquals(focus, frameLeftEdge(new JComboBox<String>(new String[]{"x"}) {
+            @Override
+            public boolean hasFocus() {
+                return true;
+            }
+        })[1]);
+
+        dense();
+        int[] classic = frameLeftEdge(new JTextField(10) {
+            @Override
+            public boolean hasFocus() {
+                return true;
+            }
+        });
+        assertEquals(frame, classic[1], "the dense look keeps its dark frame");
+        assertTrue(classic[2] != frame, "one pixel");
+    }
+
+    /** The first pixels of the middle row of a component's border, painted on its own. */
+    private static int[] frameLeftEdge(javax.swing.JComponent c) {
+        c.setSize(120, 24);
+        BufferedImage image = new BufferedImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        c.getBorder().paintBorder(c, g, 0, 0, image.getWidth(), image.getHeight());
+        g.dispose();
+        return new int[]{image.getRGB(0, 12), image.getRGB(1, 12), image.getRGB(2, 12)};
+    }
+
+    /**
+     * A button an application colours through FlatLaf styling (a primary action) shows its colour and its own
+     * text colour; the theme's raised face is for buttons in the theme's colour.
+     */
+    @Test
+    void aStyledPrimaryButtonShowsItsOwnColour() {
+        FlatLagoonLaf.setup();
+        Color accent = new Color(0x2675BF);
+        JButton primary = new JButton("Checkout");
+        primary.putClientProperty("FlatLaf.style", "background: #2675BF; foreground: #ffffff");
+        assertEquals(accent.getRGB(), faceAt(primary));
+
+        JButton def = new JButton("Next") {
+            @Override
+            public boolean isDefaultButton() {
+                return true;
+            }
+        };
+        def.putClientProperty("FlatLaf.style", "default.background: #2675BF; default.foreground: #ffffff");
+        assertEquals(accent.getRGB(), faceAt(def), "a styled default button");
+
+        JButton own = new JButton("Own");
+        own.setBackground(Color.ORANGE);
+        assertEquals(Color.ORANGE.getRGB(), faceAt(own));
+
+        JButton plain = new JButton("Save");
+        assertTrue(faceAt(plain) != UIManager.getColor("Button.background").getRGB(), "a plain button keeps the sheen");
+    }
+
+    /** The colour a little inside the left edge, half way down. */
+    private static int faceAt(JButton b) {
+        b.setSize(b.getPreferredSize());
+        BufferedImage image = new BufferedImage(b.getWidth(), b.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        b.paint(g);
+        g.dispose();
+        return image.getRGB(5, b.getHeight() / 2);
+    }
+
+    /** Combo boxes and spinners show FlatLaf's chevrons; the switch gives them the small raised buttons. */
+    @Test
+    void comboBoxesAndSpinnersShowChevronsAndTheSwitchRaisedButtons() {
+        FlatLagoonLaf.setup();
+        assertTrue(!(arrowOf(new JComboBox<>(new String[]{"x"})) instanceof LagoonArrowButton));
+        assertTrue(!(arrowOf(new JSpinner()) instanceof LagoonArrowButton));
+        dense();
+        assertTrue(arrowOf(new JComboBox<>(new String[]{"x"})) instanceof LagoonArrowButton);
+        assertTrue(arrowOf(new JSpinner()) instanceof LagoonArrowButton);
+    }
+
+    private static java.awt.Component arrowOf(java.awt.Container c) {
+        for (java.awt.Component child : c.getComponents()) {
+            if (child instanceof javax.swing.AbstractButton) {
+                return child;
+            }
+        }
+        throw new AssertionError("no arrow button in " + c);
+    }
+
+    /** A tab's content sits under one line, not in a second box: its own frames are the only ones inside. */
+    @Test
+    void tabContentIsNotBoxedASecondTime() {
+        FlatLagoonLaf.setup();
+        javax.swing.JTabbedPane tabs = new javax.swing.JTabbedPane();
+        tabs.addTab("Items", new JPanel());
+        tabs.setSize(300, 200);
+        tabs.doLayout();
+        BufferedImage image = new BufferedImage(300, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        tabs.paint(g);
+        g.dispose();
+        int line = UIManager.getColor("TabbedPane.contentAreaColor").getRGB();
+        assertTrue(image.getRGB(0, 150) != line, "no frame down the left side");
+        assertTrue(image.getRGB(150, 199) != line, "no frame along the bottom");
+    }
+
+    /** The default button is framed like any other, in one line, and as large as a plain button. */
+    @Test
+    void aDefaultButtonHasAOnePixelFrameAndAPlainButtonsSize() {
+        FlatLagoonLaf.setup();
+        JButton def = new JButton("Save") {
+            @Override
+            public boolean isDefaultButton() {
+                return true;
+            }
+        };
+        assertEquals(new JButton("Save").getPreferredSize(), def.getPreferredSize());
+        def.setSize(def.getPreferredSize());
+        BufferedImage image = new BufferedImage(def.getWidth(), def.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        def.paint(g);
+        g.dispose();
+        int frame = UIManager.getColor("Button.default.borderColor").getRGB();
+        int middle = def.getHeight() / 2;
+        assertEquals(frame, image.getRGB(1, middle), "the frame");
+        assertTrue(image.getRGB(2, middle) != frame, "one pixel");
     }
 }

@@ -4,6 +4,7 @@ import com.formdev.flatlaf.ui.FlatSpinnerUI;
 
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import java.awt.Component;
 import java.awt.Container;
@@ -14,9 +15,10 @@ import java.awt.LayoutManager;
 import static com.formdev.flatlaf.util.UIScale.scale;
 
 /**
- * Spinners with two small raised buttons ({@link LagoonArrowButton}), stacked and set inside the frame
- * with a one-pixel gap, each {@value #BUTTON_WIDTH}px wide. Pair with {@code Spinner.buttonStyle = none},
- * so FlatLaf paints no button background of its own.
+ * Spinners with FlatLaf's arrows, or, with {@code Lagoon.raisedArrowButtons}, two small raised buttons
+ * ({@link LagoonArrowButton}), stacked and set inside the frame with a one-pixel gap, each
+ * {@value #BUTTON_WIDTH}px wide. Pair the switch with {@code Spinner.buttonStyle = none}, so FlatLaf paints
+ * no button background of its own.
  */
 public class LagoonSpinnerUI extends FlatSpinnerUI {
 
@@ -26,8 +28,15 @@ public class LagoonSpinnerUI extends FlatSpinnerUI {
         return new LagoonSpinnerUI();
     }
 
+    private static boolean raised() {
+        return UIManager.getBoolean("Lagoon.raisedArrowButtons");
+    }
+
     @Override
     protected Component createNextButton() {
+        if (!raised()) {
+            return super.createNextButton();
+        }
         Component b = new LagoonArrowButton(SwingConstants.NORTH, 6, 3);
         b.setName("Spinner.nextButton");
         installNextButtonListeners(b);
@@ -36,6 +45,9 @@ public class LagoonSpinnerUI extends FlatSpinnerUI {
 
     @Override
     protected Component createPreviousButton() {
+        if (!raised()) {
+            return super.createPreviousButton();
+        }
         Component b = new LagoonArrowButton(SwingConstants.SOUTH, 6, 3);
         b.setName("Spinner.previousButton");
         installPreviousButtonListeners(b);
@@ -48,6 +60,9 @@ public class LagoonSpinnerUI extends FlatSpinnerUI {
             @Override
             public Dimension preferredLayoutSize(Container parent) {
                 Dimension d = super.preferredLayoutSize(parent);
+                if (!hasRaisedButtons(parent)) {
+                    return d;
+                }
                 Insets insets = parent.getInsets();
                 // FlatLaf adds a square button area as wide as the inner height; these buttons are narrower
                 int square = d.height - insets.top - insets.bottom;
@@ -57,7 +72,7 @@ public class LagoonSpinnerUI extends FlatSpinnerUI {
 
             @Override
             public Dimension minimumLayoutSize(Container parent) {
-                return preferredLayoutSize(parent);
+                return hasRaisedButtons(parent) ? preferredLayoutSize(parent) : super.minimumLayoutSize(parent);
             }
 
             @Override
@@ -69,7 +84,7 @@ public class LagoonSpinnerUI extends FlatSpinnerUI {
                     else if ("Spinner.previousButton".equals(c.getName())) previous = c;
                     else editor = c;
                 }
-                if (next == null || previous == null) {
+                if (!(next instanceof LagoonArrowButton) || !(previous instanceof LagoonArrowButton)) {
                     return;
                 }
                 Insets insets = parent.getInsets();
@@ -89,6 +104,15 @@ public class LagoonSpinnerUI extends FlatSpinnerUI {
                 }
             }
         };
+    }
+
+    private static boolean hasRaisedButtons(Container spinner) {
+        for (Component c : spinner.getComponents()) {
+            if (c instanceof LagoonArrowButton) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static int buttonsWidth() {

@@ -7,7 +7,9 @@ import com.formdev.flatlaf.ui.FlatUIUtils;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -16,9 +18,10 @@ import java.awt.geom.RoundRectangle2D;
 import static com.formdev.flatlaf.util.UIScale.scale;
 
 /**
- * Buttons sized by {@link CompoundSize} (the icon-text gap kept after the text, and an odd size) and
- * faced with {@link LagoonSheen}. A button with a background of its own, a toolbar button and a disabled
- * one are painted as FlatLaf paints them.
+ * Buttons sized by {@link CompoundSize} (the icon-text gap kept after the text, and an odd size, when
+ * switched on) and faced with {@link LagoonSheen}. A button with a background of its own, from
+ * {@code setBackground} or a FlatLaf style ({@code background}, {@code default.background}), a toolbar button
+ * and a disabled one are painted as FlatLaf paints them.
  */
 public class LagoonButtonUI extends FlatButtonUI {
 
@@ -38,13 +41,36 @@ public class LagoonButtonUI extends FlatButtonUI {
 
     @Override
     protected void paintBackground(Graphics g, JComponent c) {
-        if (!paintSheen(g, c, false)) {
+        if (!restsOnTheThemesFace(c, "Button.background", defaultBackground) || !paintSheen(g, c, false)) {
             super.paintBackground(g, c);
         }
     }
 
+    /**
+     * Whether FlatLaf would paint the button, at rest, in the theme's own button colour ({@code backgroundKey}):
+     * only then is the face the sheen. A colour of the button's own is painted as FlatLaf paints it, under the
+     * button's own foreground: one it was given, or one a FlatLaf style gave it ({@code background}, which FlatLaf
+     * hands over as a UIResource and copies into the delegate, or {@code default.background}).
+     */
+    static boolean restsOnTheThemesFace(JComponent c, String backgroundKey, Color uiDefaultBackground) {
+        Color bg = c.getBackground();
+        if (!(bg instanceof UIResource) || !bg.equals(UIManager.getColor(backgroundKey))) {
+            return false;
+        }
+        return !isDefault(c) || sameColour(uiDefaultBackground,
+                FlatUIUtils.getUIColor("Button.default.startBackground", "Button.default.background"));
+    }
+
+    private static boolean isDefault(JComponent c) {
+        return c instanceof javax.swing.JButton && ((javax.swing.JButton) c).isDefaultButton();
+    }
+
+    private static boolean sameColour(Color a, Color b) {
+        return a == null ? b == null : a.equals(b);
+    }
+
     static boolean paintSheen(Graphics g, JComponent c, boolean selected) {
-        if (!c.isEnabled() || !(c.getBackground() instanceof UIResource) || !LagoonBorders.Button.paintsFrame(c)) {
+        if (!c.isEnabled() || !LagoonBorders.Button.paintsFrame(c)) {
             return false;
         }
         Graphics2D g2 = (Graphics2D) g.create();
@@ -88,7 +114,8 @@ public class LagoonButtonUI extends FlatButtonUI {
 
         @Override
         protected void paintBackground(Graphics g, JComponent c) {
-            if (!paintSheen(g, c, ((AbstractButton) c).isSelected())) {
+            if (!restsOnTheThemesFace(c, "ToggleButton.background", null)
+                    || !paintSheen(g, c, ((AbstractButton) c).isSelected())) {
                 super.paintBackground(g, c);
             }
         }
