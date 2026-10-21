@@ -107,6 +107,8 @@ public class FlatLagoonLaf extends FlatLightLaf {
         defaults.put("ScrollBarUI", LagoonScrollBarUI.class.getName());
         // Boolean cells in the theme's check box; FlatLaf's table renderer has its own.
         defaults.put("TableUI", LagoonTableUI.class.getName());
+        // A tree asking for no lines (JTree.lineStyle "None") gets none.
+        defaults.put("TreeUI", LagoonTreeUI.class.getName());
         // The corner above a table's vertical scroll bar, beside its header: plain ground. A new one per
         // table, which a lazy value would not give.
         defaults.put("Table.scrollPaneCornerComponent", (UIDefaults.ActiveValue) table -> new TableCorner());

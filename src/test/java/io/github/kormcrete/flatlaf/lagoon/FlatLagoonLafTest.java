@@ -235,6 +235,76 @@ class FlatLagoonLafTest {
         assertEquals(list.getFontMetrics(list.getFont()).stringWidth("Hello") + 29, list.getPreferredSize().width);
     }
 
+    /** A tree row is as tall as its icon or text, flush at the tree's edge, 20px further in per level. */
+    @Test
+    void treeRowsAreAsTallAsTheirContentAndStepTwentyPixelsALevel() {
+        FlatLagoonLaf.setup();
+        javax.swing.JTree tree = settingsLikeTree();
+        assertEquals(new Insets(0, 0, 0, 0), tree.getInsets());
+        assertEquals(java.util.Arrays.asList(20, 40, 20), rowXs(tree));
+        javax.swing.tree.DefaultTreeCellRenderer renderer = (javax.swing.tree.DefaultTreeCellRenderer) tree.getCellRenderer();
+        assertEquals(new Insets(0, 0, 0, 0), renderer.getInsets(), "text starts where the row does");
+        assertEquals(16, tree.getRowBounds(0).height, "a row with a 16px icon");
+
+        javax.swing.tree.DefaultTreeCellRenderer textOnly = new javax.swing.tree.DefaultTreeCellRenderer();
+        textOnly.setLeafIcon(null);
+        textOnly.setOpenIcon(null);
+        textOnly.setClosedIcon(null);
+        javax.swing.JTree text = settingsLikeTree();
+        text.setCellRenderer(textOnly);
+        text.updateUI(); // the row heights were cached with the icons
+        assertEquals(text.getFontMetrics(text.getFont()).getHeight(), text.getRowBounds(0).height, "a row of text");
+    }
+
+    /** A tree may ask for no lines with the standard {@code JTree.lineStyle} client property. */
+    @Test
+    void aTreeAskingForNoLinesPaintsNone() {
+        FlatLagoonLaf.setup();
+        int hash = UIManager.getColor("Tree.hash").getRGB() & 0xFFFFFF;
+        assertTrue(pixelsOf(hash, settingsLikeTree()) > 0, "lines by default");
+        javax.swing.JTree plain = settingsLikeTree();
+        plain.putClientProperty("JTree.lineStyle", "None");
+        assertEquals(0, pixelsOf(hash, plain));
+    }
+
+    private static javax.swing.JTree settingsLikeTree() {
+        javax.swing.tree.DefaultMutableTreeNode root = new javax.swing.tree.DefaultMutableTreeNode("root");
+        javax.swing.tree.DefaultMutableTreeNode parent = new javax.swing.tree.DefaultMutableTreeNode("Parent");
+        parent.add(new javax.swing.tree.DefaultMutableTreeNode("Child"));
+        root.add(parent);
+        root.add(new javax.swing.tree.DefaultMutableTreeNode("Leaf"));
+        javax.swing.JTree tree = new javax.swing.JTree(root);
+        tree.setRootVisible(false);
+        tree.setShowsRootHandles(true);
+        tree.expandRow(0);
+        tree.setSize(tree.getPreferredSize());
+        return tree;
+    }
+
+    private static java.util.List<Integer> rowXs(javax.swing.JTree tree) {
+        java.util.List<Integer> xs = new java.util.ArrayList<>();
+        for (int row = 0; row < tree.getRowCount(); row++) {
+            xs.add(tree.getRowBounds(row).x);
+        }
+        return xs;
+    }
+
+    private static int pixelsOf(int rgb, javax.swing.JComponent c) {
+        BufferedImage image = new BufferedImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        c.paint(g);
+        g.dispose();
+        int n = 0;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                if ((image.getRGB(x, y) & 0xFFFFFF) == rgb) {
+                    n++;
+                }
+            }
+        }
+        return n;
+    }
+
     /**
      * Dense menus: 19px items, 21px with an icon or a check mark, 3px separators. Text starts one column in
      * every item of a popup: near the edge when no item has an icon, after the icon column when one does.
