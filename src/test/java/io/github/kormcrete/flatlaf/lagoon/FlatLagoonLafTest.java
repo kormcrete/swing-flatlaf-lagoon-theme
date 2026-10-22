@@ -596,21 +596,25 @@ class FlatLagoonLafTest {
         assertEquals(1, UIManager.getInt("TabbedPane.contentSeparatorHeight"));
     }
 
-    /** With a raise the unselected tabs start lower than the selected one, their text centred in what is left. */
+    /**
+     * By default the unselected tabs start two pixels lower than the selected one, their text centred in what is
+     * left; with no raise they start on its line.
+     */
     @Test
     void theSelectedTabStandsAboveTheOthersByTheRaise() {
         FlatLagoonLaf.setup();
         int unselectedFrame = UIManager.getColor("TabbedPane.unselectedBorderColor").getRGB();
-        assertEquals(unselectedFrame, tabTopEdge(0)[0], "no raise: the unselected tab starts on the selected one's line");
+        assertEquals(2, UIManager.getInt("TabbedPane.selectedTabRaise"));
+        int[] edge = tabTopEdge(2);
+        assertTrue(edge[0] != unselectedFrame && edge[1] != unselectedFrame, "the two rows above it are not the tab's");
+        assertEquals(unselectedFrame, edge[2]);
         // Each title against itself without the raise: where ink starts depends on the glyphs and the font.
-        int[] inkTopWithoutRaise = lastTitleInkTop.clone();
-        UIManager.put("TabbedPane.selectedTabRaise", 2);
+        int[] inkTopWithRaise = lastTitleInkTop.clone();
+        UIManager.put("TabbedPane.selectedTabRaise", 0);
         try {
-            int[] edge = tabTopEdge(2);
-            assertTrue(edge[0] != unselectedFrame && edge[1] != unselectedFrame, "the two rows above it are not the tab's");
-            assertEquals(unselectedFrame, edge[2]);
-            assertEquals(inkTopWithoutRaise[0], lastTitleInkTop[0], "the selected title stays");
-            assertEquals(inkTopWithoutRaise[1] + 1, lastTitleInkTop[1], "the unselected title one row lower");
+            assertEquals(unselectedFrame, tabTopEdge(0)[0], "no raise: the unselected tab starts on the selected one's line");
+            assertEquals(lastTitleInkTop[0], inkTopWithRaise[0], "the selected title stays");
+            assertEquals(lastTitleInkTop[1] + 1, inkTopWithRaise[1], "the unselected title one row lower");
         } finally {
             UIManager.put("TabbedPane.selectedTabRaise", null);
         }

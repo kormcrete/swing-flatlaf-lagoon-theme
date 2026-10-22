@@ -25,7 +25,7 @@ import java.awt.Rectangle;
  * insets for tabs on top (its top is the side next to the tabs) and turned with the tabs; the frame
  * itself stays one line.
  *
- * <p>{@code TabbedPane.selectedTabRaise} (pixels, default 0) lowers the unselected tabs from the outer edge
+ * <p>{@code TabbedPane.selectedTabRaise} (pixels; 0 for none) lowers the unselected tabs from the outer edge
  * by that much, so the selected tab stands above its neighbours; their title, icon or tab component stays
  * centred in what is left.
  */
