@@ -6,13 +6,19 @@
 A classic light theme for [FlatLaf](https://www.formdev.com/flatlaf/).
 
 <p>
-  <img src="docs/gallery-windows.png" alt="The Lagoon theme on Windows: buttons, check boxes, text fields, combo boxes, framed tabs, a table with a grid, a list, a tree, scroll bars and an internal frame" width="49%">
-  <img src="docs/gallery-macos.png" alt="The same components with the Lagoon theme on macOS" width="49%">
-  <img src="docs/gallery-linux.png" alt="The same components with the Lagoon theme on Linux" width="49%">
+  <img src="docs/order-desk-windows.png" alt="Order Desk with the Lagoon theme on Windows: the orders list, one order selected" width="49%">
+  <img src="docs/order-desk-windows-new-order.png" alt="A new order on Windows: categories, the product catalogue and a cart of four products in different quantities" width="49%">
+  <img src="docs/order-desk-macos.png" alt="The orders list with the Lagoon theme on macOS" width="49%">
+  <img src="docs/order-desk-macos-new-order.png" alt="The new order with the Lagoon theme on macOS" width="49%">
+  <img src="docs/order-desk-linux.png" alt="The orders list with the Lagoon theme on Linux" width="49%">
+  <img src="docs/order-desk-linux-new-order.png" alt="The new order with the Lagoon theme on Linux" width="49%">
 </p>
 
-<sub>Windows (top left), macOS (top right) and Linux (below): <code>LagoonGallery</code>, captured at 2x with
-<a href="https://github.com/kormcrete/swing-ui-agent">swing-ui-agent</a>.</sub>
+<sub>Windows, macOS and Linux (top to bottom): the orders list and a new order in
+<a href="https://github.com/kormcrete/swing-order-desk-demo">Order Desk</a>, a demo Swing application, under Lagoon,
+captured with <a href="https://github.com/kormcrete/swing-ui-agent">swing-ui-agent</a>. Order Desk sets its own row
+heights and table lines; <code>LagoonGallery</code> (see <a href="#build">Build</a>) shows every component as the theme
+comes.</sub>
 
 A neutral grey palette, softened corners, one-pixel dark frames set in a light ring, bevelled buttons, framed card
 tabs, white tables with a grid and blue scroll bars with buttons: the clearly delimited look of a traditional desktop
