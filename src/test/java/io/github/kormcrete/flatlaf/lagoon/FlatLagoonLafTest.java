@@ -2,6 +2,7 @@ package io.github.kormcrete.flatlaf.lagoon;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.util.SystemInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -71,8 +72,12 @@ class FlatLagoonLafTest {
         // A toolbar button's hover is the menu bar's light one, not a darkened button.
         assertEquals(UIManager.getColor("MenuBar.hoverBackground"), UIManager.getColor("Button.toolbar.hoverBackground"));
         assertEquals(UIManager.getColor("MenuBar.hoverBackground"), UIManager.getColor("ToggleButton.toolbar.hoverBackground"));
-        // ...and a platform-drawn popup border takes the theme's frame at one pixel (macOS defaults to none).
-        assertEquals(1f, ((Number) UIManager.get("PopupMenu.roundedBorderWidth")).floatValue());
+        // ...and a platform-drawn popup border takes the theme's frame at one pixel (macOS defaults to none). FlatLaf
+        // reads the width per popup kind only on macOS; Windows 11 draws its own.
+        assertEquals(1f, ((Number) UIManager.get("Popup.roundedBorderWidth")).floatValue());
+        if (SystemInfo.isMacOS) {
+            assertEquals(1f, ((Number) UIManager.get("PopupMenu.roundedBorderWidth")).floatValue());
+        }
         assertEquals(16, UIManager.getInt("ScrollBar.width"));
         assertEquals(new Color(0xBCBDBE), UIManager.getColor("Table.gridColor"));
     }
@@ -597,12 +602,15 @@ class FlatLagoonLafTest {
         FlatLagoonLaf.setup();
         int unselectedFrame = UIManager.getColor("TabbedPane.unselectedBorderColor").getRGB();
         assertEquals(unselectedFrame, tabTopEdge(0)[0], "no raise: the unselected tab starts on the selected one's line");
+        // Each title against itself without the raise: where ink starts depends on the glyphs and the font.
+        int[] inkTopWithoutRaise = lastTitleInkTop.clone();
         UIManager.put("TabbedPane.selectedTabRaise", 2);
         try {
             int[] edge = tabTopEdge(2);
             assertTrue(edge[0] != unselectedFrame && edge[1] != unselectedFrame, "the two rows above it are not the tab's");
             assertEquals(unselectedFrame, edge[2]);
-            assertEquals(lastTitleInkTop[0] + 1, lastTitleInkTop[1], "the unselected title one row lower");
+            assertEquals(inkTopWithoutRaise[0], lastTitleInkTop[0], "the selected title stays");
+            assertEquals(inkTopWithoutRaise[1] + 1, lastTitleInkTop[1], "the unselected title one row lower");
         } finally {
             UIManager.put("TabbedPane.selectedTabRaise", null);
         }
