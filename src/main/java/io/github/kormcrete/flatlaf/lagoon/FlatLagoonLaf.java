@@ -109,6 +109,8 @@ public class FlatLagoonLaf extends FlatLightLaf {
         defaults.put("ToolBarSeparatorUI", LagoonToolBarSeparatorUI.class.getName());
         // Raised arrow buttons, a framed thumb and a line towards the content.
         defaults.put("ScrollBarUI", LagoonScrollBarUI.class.getName());
+        // A framed track with a framed bar inside it.
+        defaults.put("ProgressBarUI", LagoonProgressBarUI.class.getName());
         // Boolean cells in the theme's check box; FlatLaf's table renderer has its own.
         defaults.put("TableUI", LagoonTableUI.class.getName());
         // A header the theme draws is as tall as its text.

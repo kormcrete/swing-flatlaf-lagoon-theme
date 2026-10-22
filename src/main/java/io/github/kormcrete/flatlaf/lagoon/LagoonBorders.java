@@ -12,6 +12,8 @@ import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
@@ -194,8 +196,24 @@ public final class LagoonBorders {
      * icon; when one does, every item's icon column starts {@code MenuItem.iconInset} in, so the text of all
      * items lines up behind it. An item with an icon is a pixel taller. Top, bottom and right come from the
      * margin; an item whose margin the application set keeps FlatLaf's border.
+     *
+     * <p>A menu bar's open menu is framed in {@code MenuBar.selectionBorderColor} on three sides, so it reads as
+     * the head of its popup; the popup's own frame closes it below.
      */
     public static class MenuItem extends FlatMenuItemBorder {
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            super.paintBorder(c, g, x, y, width, height);
+            Color frame = UIManager.getColor("MenuBar.selectionBorderColor");
+            if (frame != null && c instanceof JMenu && c.getParent() instanceof JMenuBar && ((JMenu) c).isSelected()) {
+                int line = scale(1);
+                g.setColor(frame);
+                g.fillRect(x, y, width, line);
+                g.fillRect(x, y, line, height);
+                g.fillRect(x + width - line, y, line, height);
+            }
+        }
+
         @Override
         public Insets getBorderInsets(Component c, Insets insets) {
             insets = super.getBorderInsets(c, insets);

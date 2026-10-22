@@ -3,10 +3,12 @@ package io.github.kormcrete.flatlaf.lagoon;
 import com.formdev.flatlaf.ui.FlatTabbedPaneUI;
 import com.formdev.flatlaf.util.UIScale;
 
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -24,7 +26,8 @@ import java.awt.Rectangle;
  * itself stays one line.
  *
  * <p>{@code TabbedPane.selectedTabRaise} (pixels, default 0) lowers the unselected tabs from the outer edge
- * by that much, so the selected tab stands above its neighbours; their text stays centred in what is left.
+ * by that much, so the selected tab stands above its neighbours; their title, icon or tab component stays
+ * centred in what is left.
  */
 public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
 
@@ -130,6 +133,21 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
         if (isSelected) return shift;
         int half = raise() / 2;
         return tabPlacement == TOP ? shift + half : tabPlacement == BOTTOM ? shift - half : shift;
+    }
+
+    // FlatLaf lays out a title and icon here without the label shift (only tab components get it), so an
+    // unselected tab's label is moved here, to stay centred in the lowered tab.
+    @Override
+    protected String layoutAndClipLabel(int tabPlacement, FontMetrics metrics, int tabIndex, String title,
+                                        Icon icon, Rectangle tabRect, Rectangle iconRect, Rectangle textRect,
+                                        boolean isSelected) {
+        String clipped = super.layoutAndClipLabel(tabPlacement, metrics, tabIndex, title, icon, tabRect,
+                iconRect, textRect, isSelected);
+        int dx = getTabLabelShiftX(tabPlacement, tabIndex, isSelected) - super.getTabLabelShiftX(tabPlacement, tabIndex, isSelected);
+        int dy = getTabLabelShiftY(tabPlacement, tabIndex, isSelected) - super.getTabLabelShiftY(tabPlacement, tabIndex, isSelected);
+        iconRect.translate(dx, dy);
+        textRect.translate(dx, dy);
+        return clipped;
     }
 
     /** An unselected tab's bounds: moved off the outer edge by the raise, the side facing the content kept. */

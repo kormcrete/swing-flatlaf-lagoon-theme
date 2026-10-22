@@ -65,6 +65,14 @@ class FlatLagoonLafTest {
         assertEquals(new Color(0x5F6265), UIManager.getColor("Component.borderColor"));
         assertEquals(2, UIManager.getInt("Component.arc"));
         assertEquals("card", UIManager.getString("TabbedPane.tabType"));
+        // Square popups, so the theme's own frame is painted, not the platform's rounded window.
+        assertEquals(0, UIManager.getInt("PopupMenu.borderCornerRadius"));
+        assertEquals(0, UIManager.getInt("ComboBox.borderCornerRadius"));
+        // A toolbar button's hover is the menu bar's light one, not a darkened button.
+        assertEquals(UIManager.getColor("MenuBar.hoverBackground"), UIManager.getColor("Button.toolbar.hoverBackground"));
+        assertEquals(UIManager.getColor("MenuBar.hoverBackground"), UIManager.getColor("ToggleButton.toolbar.hoverBackground"));
+        // ...and a platform-drawn popup border takes the theme's frame at one pixel (macOS defaults to none).
+        assertEquals(1f, ((Number) UIManager.get("PopupMenu.roundedBorderWidth")).floatValue());
         assertEquals(16, UIManager.getInt("ScrollBar.width"));
         assertEquals(new Color(0xBCBDBE), UIManager.getColor("Table.gridColor"));
     }
@@ -87,6 +95,15 @@ class FlatLagoonLafTest {
         assertEquals(LagoonTableHeaderUI.class.getName(), UIManager.getString("TableHeaderUI"));
         Border titled = UIManager.getBorder("TitledBorder.border");
         assertEquals(new Insets(2, 2, 2, 2), titled.getBorderInsets(new JPanel()));
+    }
+
+    /** Menus and the toolbar in the regular weight, as in FlatLaf Light. */
+    @Test
+    void menusAndTheToolbarAreRegularByDefault() {
+        FlatLagoonLaf.setup();
+        for (String key : new String[]{"MenuBar.font", "Menu.font", "MenuItem.font", "ToolBar.font"}) {
+            assertEquals(Font.PLAIN, UIManager.getFont(key).getStyle(), key);
+        }
     }
 
     @Test
@@ -585,9 +602,30 @@ class FlatLagoonLafTest {
             int[] edge = tabTopEdge(2);
             assertTrue(edge[0] != unselectedFrame && edge[1] != unselectedFrame, "the two rows above it are not the tab's");
             assertEquals(unselectedFrame, edge[2]);
+            assertEquals(lastTitleInkTop[0] + 1, lastTitleInkTop[1], "the unselected title one row lower");
         } finally {
             UIManager.put("TabbedPane.selectedTabRaise", null);
         }
+    }
+
+    /** The first row of title ink in the selected and the unselected tab, from the last {@link #tabTopEdge}. */
+    private static final int[] lastTitleInkTop = new int[2];
+
+    /** The first row inside a tab, below its frame, with dark text pixels that do not span the tab. */
+    private static int inkTop(BufferedImage image, java.awt.Rectangle tab) {
+        for (int y = tab.y + 3; y < tab.y + tab.height; y++) {
+            int dark = 0;
+            for (int x = tab.x + 3; x < tab.x + tab.width - 3; x++) {
+                Color c = new Color(image.getRGB(x, y), true);
+                if (c.getAlpha() > 0 && c.getRed() + c.getGreen() + c.getBlue() < 3 * 130) {
+                    dark++;
+                }
+            }
+            if (dark > 0 && dark < (tab.width - 6) * 6 / 10) {
+                return y;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -606,12 +644,49 @@ class FlatLagoonLafTest {
         Graphics2D g = image.createGraphics();
         tabs.paint(g);
         g.dispose();
+        for (int i = 0; i < 2; i++) {
+            lastTitleInkTop[i] = inkTop(image, tabs.getBoundsAt(i));
+        }
         java.awt.Rectangle tab = tabs.getBoundsAt(1);
         int[] edge = new int[3];
         for (int i = 0; i < edge.length; i++) {
             edge[i] = image.getRGB(tab.x + tab.width / 2, tab.y + i);
         }
         return edge;
+    }
+
+    /** A menu bar's open menu is framed on three sides (its popup's frame closes it below); a closed one is not. */
+    @Test
+    void aMenuBarsOpenMenuIsFramed() {
+        FlatLagoonLaf.setup();
+        int frame = UIManager.getColor("MenuBar.selectionBorderColor").getRGB();
+        javax.swing.JMenuBar bar = new javax.swing.JMenuBar();
+        javax.swing.JMenu menu = new javax.swing.JMenu("Options");
+        bar.add(menu);
+        bar.setSize(bar.getPreferredSize());
+        bar.doLayout();
+        assertTrue(menuEdge(menu) != frame, "closed");
+        menu.setSelected(true);
+        assertEquals(frame, menuEdge(menu), "open");
+        assertTrue(menuBottom(menu) != frame, "no line below, where the popup's frame is");
+    }
+
+    /** The pixel at the middle of a menu's bottom edge. */
+    private static int menuBottom(javax.swing.JMenu menu) {
+        BufferedImage image = new BufferedImage(menu.getWidth(), menu.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        menu.paint(g);
+        g.dispose();
+        return image.getRGB(menu.getWidth() / 2, menu.getHeight() - 1);
+    }
+
+    /** The pixel at the middle of a menu's left edge. */
+    private static int menuEdge(javax.swing.JMenu menu) {
+        BufferedImage image = new BufferedImage(menu.getWidth(), menu.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        menu.paint(g);
+        g.dispose();
+        return image.getRGB(0, menu.getHeight() / 2);
     }
 
     @Test
@@ -686,6 +761,25 @@ class FlatLagoonLafTest {
         assertEquals(3, runsOf(shadow, thumbCentreColumn(new JScrollBar(JScrollBar.VERTICAL, 0, 40, 0, 100))));
         // Too short to hold them with room to spare.
         assertEquals(0, runsOf(shadow, thumbCentreColumn(new JScrollBar(JScrollBar.VERTICAL, 0, 1, 0, 100))));
+    }
+
+    /** The thumb is light at rest; the mouse anywhere on the bar deepens its fill, frame and ridges together. */
+    @Test
+    void aThumbDeepensWithItsFrameAndRidgesWhileTheMouseIsOnTheBar() {
+        FlatLagoonLaf.setup();
+        JScrollBar bar = new JScrollBar(JScrollBar.VERTICAL, 0, 40, 0, 100);
+        int[] resting = thumbCentreColumn(bar);
+        assertTrue(runsOf(UIManager.getColor("ScrollBar.thumbBorderColor").getRGB(), resting) > 0, "resting frame");
+        assertEquals(3, runsOf(UIManager.getColor("ScrollBar.gripShadowColor").getRGB(), resting));
+        assertEquals(0, runsOf(UIManager.getColor("ScrollBar.hoverThumbColor").getRGB(), resting));
+
+        // On the track below the thumb, not on the thumb itself.
+        bar.dispatchEvent(new java.awt.event.MouseEvent(bar, java.awt.event.MouseEvent.MOUSE_MOVED,
+                System.currentTimeMillis(), 0, 8, 80, 0, false));
+        int[] hovered = thumbCentreColumn(bar);
+        assertTrue(runsOf(UIManager.getColor("ScrollBar.hoverThumbColor").getRGB(), hovered) > 0, "hover fill");
+        assertTrue(runsOf(UIManager.getColor("ScrollBar.hoverThumbBorderColor").getRGB(), hovered) > 0, "hover frame");
+        assertEquals(3, runsOf(UIManager.getColor("ScrollBar.hoverGripShadowColor").getRGB(), hovered));
     }
 
     private static int[] thumbCentreColumn(JScrollBar bar) {
@@ -860,7 +954,55 @@ class FlatLagoonLafTest {
         assertEquals(new Insets(1, 2, 0, 0), UIManager.getInsets("TabbedPane.tabAreaInsets"));
         assertEquals(0, UIManager.getInt("TableHeader.height"));
         assertEquals(new Insets(1, 3, 1, 3), UIManager.getInsets("TableHeader.cellMargins"));
-        assertEquals(new java.awt.Dimension(146, 16), UIManager.getDimension("ProgressBar.horizontalSize"));
+        assertEquals(new java.awt.Dimension(146, 14), UIManager.getDimension("ProgressBar.horizontalSize"));
+    }
+
+    /** By default no frames: Light's plain track and bar. */
+    @Test
+    void aProgressBarIsUnframedByDefault() {
+        FlatLagoonLaf.setup();
+        javax.swing.JProgressBar progress = new javax.swing.JProgressBar(0, 100);
+        progress.setValue(50);
+        progress.setSize(100, progress.getPreferredSize().height);
+        int[] row = progressRow(progress);
+        assertEquals(UIManager.getColor("ProgressBar.foreground").getRGB(), row[0]);
+        assertEquals(UIManager.getColor("ProgressBar.background").getRGB(), row[99]);
+    }
+
+    /** With the frame keys the track is framed and the bar sits a pixel inside it with its own frame, busy too. */
+    @Test
+    void aProgressBarsTrackAndBarAreFramedWithTheFrameKeys() {
+        dense();
+        int frame = UIManager.getColor("ProgressBar.borderColor").getRGB();
+        int track = UIManager.getColor("ProgressBar.background").getRGB();
+        int barFrame = UIManager.getColor("ProgressBar.barBorderColor").getRGB();
+        int bar = UIManager.getColor("ProgressBar.foreground").getRGB();
+        javax.swing.JProgressBar progress = new javax.swing.JProgressBar(0, 100);
+        progress.setValue(50);
+        progress.setSize(100, progress.getPreferredSize().height);
+        assertEquals(UIManager.getDimension("ProgressBar.horizontalSize").height + 4, progress.getHeight());
+        int[] row = progressRow(progress);
+        // frame, gap (track), bar frame, bar ... and at the right: track, frame.
+        assertEquals(frame, row[0]);
+        assertEquals(track, row[1]);
+        assertEquals(barFrame, row[2]);
+        assertEquals(bar, row[3]);
+        assertEquals(track, row[96]);
+        assertEquals(frame, row[99]);
+        progress.setIndeterminate(true);
+        assertTrue(java.util.Arrays.stream(progressRow(progress)).anyMatch(rgb -> rgb == barFrame), "a framed box while busy");
+    }
+
+    private static int[] progressRow(javax.swing.JProgressBar progress) {
+        BufferedImage image = new BufferedImage(progress.getWidth(), progress.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        progress.paint(g);
+        g.dispose();
+        int[] row = new int[image.getWidth()];
+        for (int x = 0; x < row.length; x++) {
+            row[x] = image.getRGB(x, image.getHeight() / 2);
+        }
+        return row;
     }
 
     /** Light's font after a live switch, as an application with a theme menu does it; Dialog 12 with the switch. */

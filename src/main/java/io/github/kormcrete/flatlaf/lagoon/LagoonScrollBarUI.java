@@ -28,9 +28,16 @@ import java.awt.Rectangle;
  *
  * <p>Colours: {@code ScrollBar.lineColor} for the line, {@code ScrollBar.thumbBorderColor} for the
  * thumb's frame, {@code ScrollBar.gripHighlightColor} and {@code ScrollBar.gripShadowColor} for the
- * ridges of its grip.
+ * ridges of its grip. The frame and the ridges' shadow follow the thumb's state, as its fill does:
+ * {@code ScrollBar.hoverThumbBorderColor} / {@code ScrollBar.pressedThumbBorderColor} and
+ * {@code ScrollBar.hoverGripShadowColor} / {@code ScrollBar.pressedGripShadowColor}, each falling back
+ * to the resting colour.
  */
 public class LagoonScrollBarUI extends FlatScrollBarUI {
+
+    /** The state FlatLaf last asked the thumb's colour for, so the frame and grip match the fill. */
+    private boolean thumbHover;
+    private boolean thumbPressed;
 
     public static ComponentUI createUI(JComponent c) {
         return new LagoonScrollBarUI();
@@ -64,9 +71,27 @@ public class LagoonScrollBarUI extends FlatScrollBarUI {
     }
 
     @Override
+    protected Color getThumbColor(JComponent c, boolean hover, boolean pressed) {
+        thumbHover = hover;
+        thumbPressed = pressed;
+        return super.getThumbColor(c, hover, pressed);
+    }
+
+    /** The key's pressed or hover variant for the thumb's state, else the resting colour. */
+    private Color stateColor(String pressedKey, String hoverKey, String key) {
+        Color color = thumbPressed ? UIManager.getColor(pressedKey) : null;
+        if (color == null && (thumbHover || thumbPressed)) {
+            color = UIManager.getColor(hoverKey);
+        }
+        return color != null ? color : UIManager.getColor(key);
+    }
+
+    @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+        thumbHover = thumbPressed = false;
         super.paintThumb(g, c, thumbBounds);
-        Color frame = UIManager.getColor("ScrollBar.thumbBorderColor");
+        Color frame = stateColor("ScrollBar.pressedThumbBorderColor", "ScrollBar.hoverThumbBorderColor",
+                "ScrollBar.thumbBorderColor");
         if (frame == null || thumbBounds.isEmpty() || !scrollbar.isEnabled()) {
             return;
         }
@@ -87,7 +112,8 @@ public class LagoonScrollBarUI extends FlatScrollBarUI {
      */
     private void paintGrip(Graphics g, Rectangle thumb) {
         Color light = UIManager.getColor("ScrollBar.gripHighlightColor");
-        Color dark = UIManager.getColor("ScrollBar.gripShadowColor");
+        Color dark = stateColor("ScrollBar.pressedGripShadowColor", "ScrollBar.hoverGripShadowColor",
+                "ScrollBar.gripShadowColor");
         if (light == null || dark == null) {
             return;
         }

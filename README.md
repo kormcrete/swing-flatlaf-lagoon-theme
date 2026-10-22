@@ -43,8 +43,8 @@ FlatLagoonLaf.setup();   // before the first Swing component is created
 
 ### Fonts
 
-Like FlatLaf Light, the theme uses the platform's UI font; menus, the toolbar and frame titles are
-bold. An application that wants another base font sets its own `defaultFont` before calling
+Like FlatLaf Light, the theme uses the platform's UI font, with menus and the toolbar in the regular
+weight; frame titles are bold. An application that wants another base font sets its own `defaultFont` before calling
 `setup()`; the theme leaves it alone (for fonts based on Dialog 12, see `Lagoon.dialogFont` below):
 
 ```java
@@ -85,6 +85,9 @@ FlatLaf.updateUI();
   colour of its own, set or from a FlatLaf style (a primary action, say), is painted flat in that
   colour, under its own foreground.
 - `LagoonTableHeaderUI` — a header the theme draws is as tall as its text.
+- `LagoonProgressBarUI` — a grey track and an accent bar, as in FlatLaf Light; with
+  `ProgressBar.borderColor` and `ProgressBar.barBorderColor` set (and a `ProgressBar.border` that leaves
+  room), the track is framed like a field and the bar framed a pixel inside it.
 - `LagoonTreeUI` — a tree that sets `JTree.lineStyle` to `"None"` paints no lines, as in Swing's
   own look-and-feels.
 - `LagoonComboBoxUI`, `LagoonSpinnerUI`, `LagoonLabelUI`, `LagoonButtonUI` — FlatLaf's arrows and
