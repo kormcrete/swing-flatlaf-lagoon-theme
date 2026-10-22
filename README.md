@@ -69,7 +69,8 @@ FlatLaf.updateUI();
 - `LagoonTabbedPaneUI` — FlatLaf's card tabs frame only the selected tab; this theme frames and
   shades the unselected ones too. Its two colours are properties keys
   (`TabbedPane.unselectedBorderColor`, `TabbedPane.unselectedBottomColor`), and it handles all
-  four tab placements.
+  four tab placements. `TabbedPane.selectedTabRaise` (pixels, default 0) lowers the unselected
+  tabs so the selected one stands above them.
 - `LagoonBorders` — fields, combo boxes, spinners, buttons and scroll panes set their frame in an
   etched ring (`Component.ringShadowColor` above and left, `Component.ringHighlightColor` below and
   right) in every enabled state, in the space FlatLaf reserves for its focus ring. A focused

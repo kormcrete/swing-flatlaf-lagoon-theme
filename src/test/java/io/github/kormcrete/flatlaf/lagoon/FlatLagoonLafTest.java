@@ -574,6 +574,46 @@ class FlatLagoonLafTest {
         assertEquals(1, UIManager.getInt("TabbedPane.contentSeparatorHeight"));
     }
 
+    /** With a raise the unselected tabs start lower than the selected one, their text centred in what is left. */
+    @Test
+    void theSelectedTabStandsAboveTheOthersByTheRaise() {
+        FlatLagoonLaf.setup();
+        int unselectedFrame = UIManager.getColor("TabbedPane.unselectedBorderColor").getRGB();
+        assertEquals(unselectedFrame, tabTopEdge(0)[0], "no raise: the unselected tab starts on the selected one's line");
+        UIManager.put("TabbedPane.selectedTabRaise", 2);
+        try {
+            int[] edge = tabTopEdge(2);
+            assertTrue(edge[0] != unselectedFrame && edge[1] != unselectedFrame, "the two rows above it are not the tab's");
+            assertEquals(unselectedFrame, edge[2]);
+        } finally {
+            UIManager.put("TabbedPane.selectedTabRaise", null);
+        }
+    }
+
+    /**
+     * The first three pixels down the middle of the second (unselected) tab of a tab strip, from its top, and checks
+     * its label shift: half the raise.
+     */
+    private static int[] tabTopEdge(int raise) {
+        javax.swing.JTabbedPane tabs = new javax.swing.JTabbedPane();
+        tabs.addTab("Orders", new JPanel());
+        tabs.addTab("Customers", new JPanel());
+        tabs.setSize(300, 200);
+        tabs.doLayout();
+        assertEquals(raise / 2, ((LagoonTabbedPaneUI) tabs.getUI()).getTabLabelShiftY(javax.swing.SwingConstants.TOP, 1, false));
+        assertEquals(0, ((LagoonTabbedPaneUI) tabs.getUI()).getTabLabelShiftY(javax.swing.SwingConstants.TOP, 0, true));
+        BufferedImage image = new BufferedImage(tabs.getWidth(), tabs.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        tabs.paint(g);
+        g.dispose();
+        java.awt.Rectangle tab = tabs.getBoundsAt(1);
+        int[] edge = new int[3];
+        for (int i = 0; i < edge.length; i++) {
+            edge[i] = image.getRGB(tab.x + tab.width / 2, tab.y + i);
+        }
+        return edge;
+    }
+
     @Test
     void aToolbarSeparatorKeepsItsLineInAFlowLayoutAndNoSizeOutlivesASwitch() {
         FlatLagoonLaf.setup();

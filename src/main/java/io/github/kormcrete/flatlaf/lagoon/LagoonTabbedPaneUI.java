@@ -11,6 +11,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Rectangle;
 
 /**
  * Card tabs where the unselected tabs are framed and shaded too, so the selected one reads as
@@ -21,12 +22,16 @@ import java.awt.Insets;
  * {@code TabbedPane.contentMargins} is the room between the content's frame and the content, given as
  * insets for tabs on top (its top is the side next to the tabs) and turned with the tabs; the frame
  * itself stays one line.
+ *
+ * <p>{@code TabbedPane.selectedTabRaise} (pixels, default 0) lowers the unselected tabs from the outer edge
+ * by that much, so the selected tab stands above its neighbours; their text stays centred in what is left.
  */
 public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
 
     private Color unselectedBorderColor;
     private Color unselectedBottomColor;
     private Insets contentMargins;
+    private int selectedTabRaise;
 
     public static ComponentUI createUI(JComponent c) {
         return new LagoonTabbedPaneUI();
@@ -38,6 +43,7 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
         unselectedBorderColor = UIManager.getColor("TabbedPane.unselectedBorderColor");
         unselectedBottomColor = UIManager.getColor("TabbedPane.unselectedBottomColor");
         contentMargins = UIManager.getInsets("TabbedPane.contentMargins");
+        selectedTabRaise = UIManager.getInt("TabbedPane.selectedTabRaise");
     }
 
     // FlatLaf paints the frame from the separator height, not from these insets, so the room added here stays blank.
@@ -56,6 +62,10 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
     @Override
     protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
                                       int x, int y, int w, int h, boolean isSelected) {
+        if (!isSelected) {
+            Rectangle r = lowered(tabPlacement, x, y, w, h);
+            x = r.x; y = r.y; w = r.width; h = r.height;
+        }
         if (isSelected || unselectedBottomColor == null || isHover(tabIndex)) {
             super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
             return;
@@ -81,6 +91,10 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
     @Override
     protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex,
                                   int x, int y, int w, int h, boolean isSelected) {
+        if (!isSelected) {
+            Rectangle r = lowered(tabPlacement, x, y, w, h);
+            x = r.x; y = r.y; w = r.width; h = r.height;
+        }
         if (isSelected || unselectedBorderColor == null) {
             super.paintTabBorder(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
             return;
@@ -100,6 +114,37 @@ public class LagoonTabbedPaneUI extends FlatTabbedPaneUI {
             g.fillRect(x + w - line, y, line, h);                              // trailing (right)
             if (first) g.fillRect(x, y, line, h);                              // leading (left)
         }
+    }
+
+    @Override
+    protected int getTabLabelShiftX(int tabPlacement, int tabIndex, boolean isSelected) {
+        int shift = super.getTabLabelShiftX(tabPlacement, tabIndex, isSelected);
+        if (isSelected) return shift;
+        int half = raise() / 2;
+        return tabPlacement == LEFT ? shift + half : tabPlacement == RIGHT ? shift - half : shift;
+    }
+
+    @Override
+    protected int getTabLabelShiftY(int tabPlacement, int tabIndex, boolean isSelected) {
+        int shift = super.getTabLabelShiftY(tabPlacement, tabIndex, isSelected);
+        if (isSelected) return shift;
+        int half = raise() / 2;
+        return tabPlacement == TOP ? shift + half : tabPlacement == BOTTOM ? shift - half : shift;
+    }
+
+    /** An unselected tab's bounds: moved off the outer edge by the raise, the side facing the content kept. */
+    private Rectangle lowered(int tabPlacement, int x, int y, int w, int h) {
+        int raise = raise();
+        switch (tabPlacement) {
+            case BOTTOM: return new Rectangle(x, y, w, h - raise);
+            case LEFT:   return new Rectangle(x + raise, y, w - raise, h);
+            case RIGHT:  return new Rectangle(x, y, w - raise, h);
+            default:     return new Rectangle(x, y + raise, w, h - raise);
+        }
+    }
+
+    private int raise() {
+        return UIScale.scale(selectedTabRaise);
     }
 
     private boolean isHover(int tabIndex) {
