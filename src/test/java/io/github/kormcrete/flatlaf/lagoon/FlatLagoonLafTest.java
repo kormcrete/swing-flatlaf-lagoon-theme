@@ -23,6 +23,7 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -699,6 +700,44 @@ class FlatLagoonLafTest {
         menu.paint(g);
         g.dispose();
         return image.getRGB(0, menu.getHeight() / 2);
+    }
+
+    /**
+     * A selected row keeps the colour its renderer gives it, made more vivid; a plain row gets the selection colour.
+     */
+    @Test
+    void aSelectedRowKeepsItsOwnColourMadeMoreVivid() {
+        FlatLagoonLaf.setup();
+        Color amber = new Color(0xFFE9A8);
+        JTable table = new JTable(3, 2);
+        table.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected,
+                                                           boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    setBackground(row == 0 ? amber : t.getBackground());
+                }
+                return this;
+            }
+        });
+        table.setSize(200, table.getRowHeight() * 3);
+        table.selectAll();
+        BufferedImage image = new BufferedImage(table.getWidth(), table.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        table.paint(g);
+        g.dispose();
+        int middle = table.getRowHeight() / 2;
+        assertEquals(LagoonTableUI.amplified(amber).getRGB(), image.getRGB(50, middle), "the coloured row");
+        assertEquals(table.getSelectionBackground().getRGB(), image.getRGB(50, table.getRowHeight() + middle),
+                "a plain row");
+
+        // A table can opt out: then the coloured row is selected like any other.
+        table.putClientProperty(LagoonTableUI.SELECTION_FOLLOWS_CELL_COLOR, false);
+        g = image.createGraphics();
+        table.paint(g);
+        g.dispose();
+        assertEquals(table.getSelectionBackground().getRGB(), image.getRGB(50, middle), "opted out");
     }
 
     @Test

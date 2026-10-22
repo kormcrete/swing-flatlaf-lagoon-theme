@@ -84,6 +84,10 @@ FlatLaf.updateUI();
   over and darker when pressed (`Lagoon.sheen.*` keys); hover shows in the frame. A button with a
   colour of its own, set or from a FlatLaf style (a primary action, say), is painted flat in that
   colour, under its own foreground.
+- `LagoonTableUI` — a selected cell keeps the colour its renderer gives it unselected (a row or column
+  colour), made more vivid, instead of the flat selection colour; cells in the table's own colours are selected
+  as usual. Off for every table with `Table.selectionFollowsCellColor = false`, or for one table with the client
+  property of the same name set to `false`.
 - `LagoonTableHeaderUI` — a header the theme draws is as tall as its text.
 - `LagoonProgressBarUI` — a grey track and an accent bar, as in FlatLaf Light; with
   `ProgressBar.borderColor` and `ProgressBar.barBorderColor` set (and a `ProgressBar.border` that leaves
